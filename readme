@@ -15,7 +15,10 @@ More code here for solution
 :+1: FLAG{ENTER_FLAG_HERE}
 <hr>
 
-APT Trivia
+### APT Trivia
+Description - Are you an APT connoisseur? Flag format:
+FLAG{example-flag-here} Port: 1337
+
 ```
 which country is volt typhoon from? china
 which country is midnight blizzard from?  russia
@@ -23,7 +26,13 @@ which country is fancy bear from?
 what is the last name of the ransomware operator responsible for the 2023 medibank hack? ermakov
 what is the fireeye APT number for Wicked Panda? 41
 which ransomware team is responsible for the 2023 TSMC breach? lockbit ransomware gang? national hazard agency
+what is the onion domain of the alphv ransomware gang as of 2024? alphvuzxyxv6ylumd2ngp46xzq3pw6zflomrghvxeuks6kklberrbmyd.onion
+what is the onion domain of the lockbit gang that contains the string apt34? lockbitapt34kvrip6xojylohhxrwsvpzdffgs5z4pbbsywnzsbdguqd.onion
+what is the clearewb domain of the deceased conti ransomware gang with the two-letter TLD? continews.bz
 ```
+
+:+1: FLAG{you-are-now-an-apt-connoisseur}
+<hr>
 
 SNEAKERBOT
 ```
