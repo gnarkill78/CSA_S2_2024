@@ -147,3 +147,71 @@ for _ in range(100):
             print("[-] Registration failed. HTTP status code:", response.status_code)
             count += 1
 ```
+
+LARGE FLAG MODEL CODE
+```
+#!/usr/bin/env python3
+
+import sys
+import random
+import pickle
+import time
+
+def predict(word_sequence, model, sequence_length=8):
+    '''
+    sequence length defines the maximum limit of words to spit out
+    '''
+    try:
+        if len(word_sequence) >= sequence_length:
+            return word_sequence
+
+        start_word = word_sequence[-1]
+        
+        # Check if start_word exists in the model
+        if start_word not in model:
+            return None
+
+        candidates = model[start_word]
+        # print(candidates)
+        candidates_sorted = sorted(candidates, key=lambda x: x[1], reverse=True)
+
+        most_probable = candidates_sorted[random.randrange(0, min(3, len(candidates_sorted)))] # pick between top 3 candidates
+        word_sequence.extend(most_probable[0])
+
+        return predict(word_sequence, model, sequence_length)
+    except RecursionError:
+        print("Recursion limit exceeded. Skipping word.")
+        return word_sequence
+
+def main():
+    try:
+        model_file = open('model.pkl', 'rb')
+        model = pickle.load(model_file)
+        model_file.close()
+    except FileNotFoundError:
+        print("Error: Model file not found.")
+        return
+
+    try:
+        words_file = open('words.txt', 'r')
+        words = words_file.read().split()
+        words_file.close()
+    except FileNotFoundError:
+        print("Error: Words file not found.")
+        return
+
+    # Set maximum recursion depth
+    sys.setrecursionlimit(3000)  # Adjust this limit as needed
+
+    for word in words:
+        print("Prompt:", word)
+        prediction = predict([word], model)
+        if prediction is not None:
+            print(' '.join(prediction))
+            print()
+        time.sleep(0.1)  # Sleep for one second between each word
+
+if __name__ == "__main__":
+    main()
+
+```
