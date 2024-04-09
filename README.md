@@ -34,6 +34,161 @@ what is the clearewb domain of the deceased conti ransomware gang with the two-l
 :+1: FLAG{you-are-now-an-apt-connoisseur}
 <hr>
 
+### auth user api
+Description - My REST API needs authentication built in to stop bad people from accessing my user data.
+
+Please implement authentication by:
+* adding a field "password" into the database schema.
+* finish the endpoint at /users/auth that takes a JSON input (username and password) and check it against the database. if success, return HTTP status 200 and utilize the built in session handling in flask to authenticate the user. Otherwise return status 403.
+* check that a user is authenticated before allowing any action from the other api endpoints. if not authenticated, return http status 401
+* When you're done, set the test user's password to test123 and provide us with your URL for testing.
+
+Flag format: FLAG{your-Fl4g-G03s-here}
+
+This was the provided code
+```
+#!/usr/bin/env python3
+from flask import Flask, request, jsonify, session
+import os
+import sqlite3
+app = Flask(__name__)
+
+db = sqlite3.connect(":memory:", check_same_thread=False)
+db.row_factory = sqlite3.Row
+cur = db.cursor()
+cur.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, details TEXT)")
+cur.execute("INSERT INTO users values('test', 'test user')")
+app.secret_key = "i8y7g2uhjkadjfaklsdfasdf"
+
+@app.route("/users/auth", methods=["POST"])
+def auth_users():
+    d = request.json()
+    username, password = d['username'], d['password']
+    # TODO finish auth
+
+
+@app.route("/users/add", methods=["POST"])
+def add_user():
+    d = request.json()
+    username = d["username"]
+    # TODO add password
+    details = d["details"]
+    cur = db.cursor()
+    cur.execute("INSERT INTO users values(?, ?)", (username, details))
+    db.commit()
+    return jsonify({"status":"OK"})
+
+
+@app.route("/users/<username>")
+def check_user(username):
+    cur = db.cursor()
+    cur.execute("SELECT * FROM users WHERE username = ?", (username,))
+    row = cur.fetchone()
+    return jsonify(dict(row))
+
+
+if __name__ == '__main__':
+    if os.getenv("TERM_PROGRAM"): # localhost debug
+         app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
+
+```
+Solution:
+Plugged this straight into ChatGPT:
+```
+#!/usr/bin/env python3
+from flask import Flask, request, jsonify, session
+import os
+import sqlite3
+
+app = Flask(__name__)
+app.secret_key = "i8y7g2uhjkadjfaklsdfasdf"
+
+# In-memory database initialization
+db = sqlite3.connect(":memory:", check_same_thread=False)
+db.row_factory = sqlite3.Row
+cur = db.cursor()
+cur.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, details TEXT)")
+# Clear all users from the 'user' table
+cur.execute("DELETE FROM users;")
+cur.execute("INSERT INTO users (username, password, details) VALUES (?, ?, ?)", ("test", "test123", "test user"))
+#cur.execute("INSERT INTO users (username, password, details) VALUES (?, ?, ?)", ("bob", "bob123", "test user"))
+db.commit()
+
+# Authentication decorator
+def require_auth(func):
+    def wrapper(*args, **kwargs):
+        if 'username' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+        return func(*args, **kwargs)
+    return wrapper
+
+@app.route("/users/auth", methods=["POST"])
+def auth_users():
+    data = request.json
+    username, password = data.get('username'), data.get('password')
+#    print("Username to be authenticated is: ",username," against password of: ",password)
+    if not username or not password:
+        return jsonify({"error": "Username or password missing"}), 400
+
+    cur = db.cursor()
+    cur.execute("SELECT * FROM users WHERE username = ?", (username,))
+    user = cur.fetchone()
+#    print("The user is:",str(user['username']))
+    if user:
+        stored_password = str(user['password'])  # Convert stored password to string
+        provided_password = str(password)  # Convert provided password to string
+#        provided_password = password.replace('NOTBOB', '').strip()
+        print("The provided password is: ",provided_password)
+        print("Retrieved user:", dict(user))  # Print retrieved user information
+        print("Retrieved password:", stored_password)  # Print retrieved password
+        if stored_password == provided_password:  # Compare passwords
+            print("Session: ",session)
+            session['username'] = username
+            return jsonify({"status": "OK"}), 200
+    return jsonify({"error": "Invalid credentials"}), 403
+
+@app.route("/users/add", methods=["POST"])
+def add_user():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password") + 'NOTBOB'
+    print("The retrieved username is: ",username, " and the retrieved password is: ",password)
+    details = data.get("details")
+    print("New user details are: ",details)
+    if not username or not password:
+        return jsonify({"error": "Username or password missing"}), 400
+
+    cur = db.cursor()
+    cur.execute("INSERT INTO users (username, password, details) VALUES (?, ?, ?)", (username, password, details))
+    db.commit()
+
+    # Authenticate the user immediately after account creation
+    session['username'] = username
+    print("Session after adding user:", session)
+
+    return jsonify({"status": "OK"})
+
+@app.route("/users/<username>")
+@require_auth
+def check_user(username):
+    print("Session in check_user:", session)  # Debug: Print session information
+    cur = db.cursor()
+    cur.execute("SELECT * FROM users WHERE username = ?", (username,))
+    row = cur.fetchone()
+    if not row:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(dict(row))
+
+if __name__ == '__main__':
+    if os.getenv("TERM_PROGRAM"): # localhost debug
+         app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
+
+```
+:+1: FLAG{ENTER_FLAG_HERE}
+<hr>
+
 ### Rbac User api
 Description - The pentest report for our user API prototype came back and it had red everywhere.
 
@@ -90,7 +245,7 @@ def auth():
     username, password = request.form['username'], request.form['password']
     cur = db.cursor()
     entry = cur.execute("SELECT * FROM user WHERE username = ? AND password = ?", (username, password)).fetchone()
-    
+
     if entry:
         session['user_id'] = entry['id']
         return "Welcome!"
@@ -108,7 +263,7 @@ def check_permission(user_id, target_user_id, role):
     elif role == 'user' and user_id == target_user_id:
         return True
     elif role == 'readonly':
-        return False
+        return True  # Allow admin to access readonly users
     else:
         return False
 
@@ -124,12 +279,34 @@ def get_user(userid):
 
     role = user['role']
 
-    if role == 'user' and user_id != userid:
+    # Check if admin or the requested user
+    if role == 'admin' or user_id == userid:
+        target_user = get_user_by_id(userid)
+        if not target_user:
+            abort(404)
+
+        if check_permission(user_id, userid, target_user['role']):
+            data = dict(target_user)
+            del data['password']  # redact sensitive info
+            return jsonify(data)
+        else:
+            abort(403)
+
+    # If the user is 'readonly', they can only view their own data
+    if role == 'readonly' and user_id != userid:
         abort(403)
 
-    data = dict(user)
-    del data['password']  # redact sensitive info
-    return jsonify(data)
+    # For 'readonly' role viewing its own data
+    if role == 'readonly' and user_id == userid:
+        target_user = get_user_by_id(userid)
+        if not target_user:
+            abort(404)
+
+        data = dict(target_user)
+        del data['password']  # redact sensitive info
+        return jsonify(data)
+
+    abort(403)  # If not admin or the requested user
 
 @app.route('/api/users/<int:userid>', methods=["POST"])
 def mod_user(userid):
@@ -145,6 +322,10 @@ def mod_user(userid):
 
     if role == 'user' and user_id != userid:
         abort(403)
+
+    # Check if the role is 'readonly'
+    if role == 'readonly':
+        abort(403)  # 'readonly' role cannot modify any data
 
     cur = db.cursor()
     if 'description' in request.form:
@@ -163,7 +344,8 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5000, debug=True)
     app.run(host='0.0.0.0', port=5000)
 ```
-
+:+1: FLAG{n1c3_api_security_m8}
+<hr>
 
 ### Sneakerbot
 Description - I recently started building my own LLM... I am not sure what I'm doing yet, but I managed to get some sort of next-token prediction algorithm working with only one word using some data from Wikipedia pages. I've heard all about security concerns on leaking training data, so for testing, I've hidden a flag in the training data to see if you can find it.
