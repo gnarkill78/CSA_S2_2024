@@ -146,7 +146,7 @@ def auth_users():
             print("Session: ",session)
             session['username'] = username
             return jsonify({"status": "OK"}), 200
-    return jsonify({"error": "Invalid credentials"}), 403
+    return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route("/users/add", methods=["POST"])
 def add_user():
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 
 ```
-:+1: FLAG{ENTER_FLAG_HERE}
+:+1: FLAG{you-better-h4sh-that-password}
 <hr>
 
 ### Rbac User api
