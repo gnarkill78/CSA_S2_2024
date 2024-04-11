@@ -566,7 +566,7 @@ if __name__ == "__main__":
 
 ```
 
-### S=secretsbin
+### secretsbin
 Description - I built my own temporary, encrypted notes service! I am pretty confident about my bash skills, but just in case, can you see if there are any bugs in it? 
 It listens on port 1337. Just in case you get in, the flag is in /flag.txt Flag format:
 FLAG{example_flag_format}
@@ -686,5 +686,5 @@ test
 ```
 You can see that flag.txt has also been printed.
 
-:+1: FLAG{bash is a tr4p}
+:+1: FLAG{bash_is_a_tr4p}
 <hr>
