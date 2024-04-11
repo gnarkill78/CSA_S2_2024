@@ -189,6 +189,31 @@ if __name__ == '__main__':
 :+1: FLAG{you-better-h4sh-that-password}
 <hr>
 
+### Forum troubles
+Description - As a threat intelligence officer at the ministry, you've been tasked to infiltrate the recently resurfaced XSRF forum after the CSRF take down.
+
+Feel free to create new accounts. Just be careful.
+
+The end goal is to try and take over an existing account.. that way you seem more legit.
+
+Challenge IP: 192.168.88.100
+
+FLAG format: FLAG{ent3r_y0ur_fl49}
+
+Solution:
+Created a new user (user/password) and logged in
+
+The home page presents the forum and any posts that have been made. The one of interest was under Selling, title 'CSRF forum breach.csv'
+There was a link inside that post to a pastebin sit that hosted a long list of exposed credentials.
+In there was a user on the site called 'Stalk'
+Plugged the hash into crackstation and it returned the password 'genius'
+
+Logged in as 'Stalk' and noticed 1 message in the inbox.
+When that was opened, there was a message about requesting to be removed from the password dump as well as the flag.
+
+:+1: FLAG{f0rums_4r3_c00l}
+<hr>
+
 ### Rbac User api
 Description - The pentest report for our user API prototype came back and it had red everywhere.
 
