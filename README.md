@@ -661,5 +661,5 @@ test
 ```
 You can see that flag.txt has also been printed.
 
-:+1: FLAG{bash_is_a_tr4p}
+:+1: FLAG{bash is a tr4p}
 <hr>
