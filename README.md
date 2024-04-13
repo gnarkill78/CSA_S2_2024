@@ -848,3 +848,91 @@ You can see that flag.txt has also been printed.
 
 :+1: FLAG{bash_is_a_tr4p}
 <hr>
+
+### STIX and stones
+Description - Description
+
+Automated IOC sharing and blocking are all the rage these days. Our SOC has recently entered into an agreement with a boutique threat intelligence company and we are looking to provide a private email inbox to receive STIX formatted attachments from them and block all IP addresses provided.
+
+The service should receive emails via SMTP, extract all IP address indicators from STIX2 format, translate them to iptable commands (but without the word iptables), and make them available (one per line) via an HTTP API at /blockrules. Use the iptable DROP rule to generate the blocking rules for inbound and outbound connections for those IP addresses. (e.g. -A OUTPUT -j DROP ...)
+
+Threat blocking is real-time, so there should not be more than 2000ms of delay between the email being received and the rule being available via the API.
+
+Expiration dates of IOCs do not have to be considered for now.
+
+This is what the architecture of this service looks like:
+
+
+When you're finished, provide the check server http://192.168.88.100 on port 80 with your SMTP server IP, PORT and web API URL. We will use our test server to see if the rules are implemented properly by testing the rules from IPs passed via STIX format via email.
+
+Flag Format: FLAG{example_flag_content}
+
+Solution:
+First of all, setup SMTP/IMAP locally
+sudo apt install postfix
+
+IGNORE this - tried a simple SMTP server
+```
+import asyncore
+from smtpd import SMTPServer
+import imaplib
+import email
+from email.parser import BytesParser
+from email.policy import default
+
+# Define the SMTP server class
+class CustomSMTPServer(SMTPServer):
+    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
+        print(f"Received message from: {peer}")
+        print(f"Mail From: {mailfrom}")
+        print(f"Recipients: {rcpttos}")
+        print("Data:")
+        print(data)
+
+# Define the IMAP server class
+class CustomIMAPServer(asyncore.dispatcher):
+    def __init__(self, address):
+        asyncore.dispatcher.__init__(self)
+        self.create_socket()
+        self.connect(address)
+
+    def handle_connect(self):
+        print("Connected to IMAP server")
+
+    def handle_close(self):
+        print("Disconnected from IMAP server")
+        self.close()
+
+    def handle_read(self):
+        data = self.recv(8192)
+        print("Received data from IMAP client:", data)
+
+# Set up and start the SMTP server
+def start_smtp_server():
+    smtp_server = CustomSMTPServer(('192.168.88.2', 25), None)
+    print("SMTP server started.")
+    try:
+        asyncore.loop()
+    except KeyboardInterrupt:
+        smtp_server.close()
+        print("SMTP server stopped.")
+
+# Set up and start the IMAP server
+def start_imap_server():
+    imap_server = CustomIMAPServer(('192.168.88.2', 110))  # Change the port as needed
+    print("IMAP server started.")
+    try:
+        asyncore.loop()
+    except KeyboardInterrupt:
+        imap_server.close()
+        print("IMAP server stopped.")
+
+if __name__ == "__main__":
+    import threading
+    smtp_thread = threading.Thread(target=start_smtp_server)
+    imap_thread = threading.Thread(target=start_imap_server)
+    smtp_thread.start()
+    imap_thread.start()
+```
+:+1: FLAG{ENTER_FLAG_HERE}
+<hr>
