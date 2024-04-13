@@ -214,6 +214,166 @@ When that was opened, there was a message about requesting to be removed from th
 :+1: FLAG{f0rums_4r3_c00l}
 <hr>
 
+### Incorrect buffer
+Description - I'm making a small web server in C. The default response actually renders in Firefox!
+
+But Curl doesn't like it for some reason and says it received an HTTP/0.9 response or something. I am confused.
+
+Also, the 404 response doesn't seem right.
+
+Can you fix those bugs for me? Just host that server on your local machine using
+
+ncat -e ./server -nklvp 80
+
+The flag format would be like FLAG{your_flag_here}, and the checking server is on http://192.168.88.100:5000.
+
+When you've patched the bugs, it'll send you the flag via a HTTP request to your server. Oh, and make sure I can read your server binary with a GET request to /server (the functionality to serve files is already built in, you just need to fix up the bugs).
+
+The code supplied was:
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <string.h>
+
+/**
+ * stdin based web server
+ * use something like xinetd, ncat or socat to bind to listen port
+ **/
+
+#define VERSION "build-8191827656789"
+
+void write_http_response_header(int status, char* status_str, char* content_type, int content_length) {
+	// also ends it
+	printf("HTTP/1.1 %i %s\r\nServer: my-server/%s\r\nContent-Type: %s\r\nContent-Length: %i\r\n", status, status_str,VERSION, content_type, content_length);
+}
+
+int main() {
+	char request[320]; // uri should not be more than 255 bytes anyway
+	fgets(request, 320, stdin);
+	// get method and request path
+	char version[3];
+	char url[256];
+	char method[20];
+
+	sscanf(request, "%s %s HTTP/%s\n", method, url, version);
+	fprintf(stderr, "method:%s url:%s version:%s\n", method,url,version);
+
+	char* filename = url + 1;
+
+	if (strcmp(url, "/") == 0) { //index
+		// serve index.html if it exists, otherwise just print 
+		if (access("index.html", F_OK ) != -1 ) {
+			struct stat filestat;
+		    stat("index.html", &filestat);
+		    unsigned char file_buffer[filestat.st_size];
+		    FILE* file_to_serve = fopen("index.html", "r");
+		    fread(file_buffer, filestat.st_size, 1, file_to_serve);
+		    write_http_response_header(200, "OK", "text/html", filestat.st_size);
+		    fwrite(file_buffer, filestat.st_size,1, stdout);
+		} else {
+			printf("<h2>Welcome!</h2>There's nothing here.");
+		}
+	} else if (access(filename, F_OK ) != -1 ) {
+
+	    // if local file exists, serve it
+	    struct stat filestat;
+	    stat(filename, &filestat);
+	    unsigned char file_buffer[filestat.st_size];
+	    FILE* file_to_serve = fopen(filename	, "r");
+	    fread(file_buffer, filestat.st_size, 1, file_to_serve);
+	    write_http_response_header(200, "OK", "text/html", filestat.st_size);
+	    fwrite(file_buffer, filestat.st_size,1, stdout);
+
+	} else {
+	    // file doesn't exist
+	    write_http_response_header(404, "Not found", "text/plain", 10);
+	    printf("404 NOT FOUND");
+	}
+
+}
+```
+Solution:
+Asked ChatGPT to fix the code and it got most of the way with a few minor tweaks, this was the final code:
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <string.h>
+
+#define VERSION "build-8191827656789"
+
+void write_http_response_header(int status, char* status_str, char* content_type, int content_length) {
+    printf("HTTP/1.1 %i %s\r\nServer: my-server/%s\r\nContent-Type: %s\r\nContent-Length: %i\r\n\r\n", status, status_str,VERSION, content_type, content_length);
+}
+
+int main() {
+    char request[320];
+    fgets(request, 320, stdin);
+    char version[10]; // Changed from 3 to 10
+    char url[256];
+    char method[20];
+
+    sscanf(request, "%s %s HTTP/%s\n", method, url, version);
+    fprintf(stderr, "method:%s url:%s version:%s\n", method, url, version);
+
+    char* filename = url + 1;
+
+    if (strcmp(url, "/") == 0) { //index
+        if (access("index.html", F_OK ) != -1 ) {
+            struct stat filestat;
+            stat("index.html", &filestat);
+            unsigned char* file_buffer = malloc(filestat.st_size); // Dynamically allocate memory for file_buffer
+            FILE* file_to_serve = fopen("index.html", "r");
+            fread(file_buffer, filestat.st_size, 1, file_to_serve);
+            write_http_response_header(200, "OK", "text/html", filestat.st_size);
+            fwrite(file_buffer, filestat.st_size, 1, stdout);
+            free(file_buffer); // Free dynamically allocated memory
+            fclose(file_to_serve); // Close file pointer after use
+        } else {
+            write_http_response_header(404, "Not Found", "text/plain", 38); // Corrected content length
+            printf("<h2>Welcome!</h2>There's nothing here.");
+        }
+    } else if (access(filename, F_OK ) != -1 ) {
+        struct stat filestat;
+        stat(filename, &filestat);
+        unsigned char* file_buffer = malloc(filestat.st_size); // Dynamically allocate memory for file_buffer
+        FILE* file_to_serve = fopen(filename, "r");
+        fread(file_buffer, filestat.st_size, 1, file_to_serve);
+        write_http_response_header(200, "OK", "text/html", filestat.st_size);
+        fwrite(file_buffer, filestat.st_size, 1, stdout);
+        free(file_buffer); // Free dynamically allocated memory
+        fclose(file_to_serve); // Close file pointer after use
+    } else {
+        write_http_response_header(404, "Not Found", "text/plain", 13);
+        printf("404 NOT FOUND");
+    }
+
+    return 0;
+}
+```
+Which rendered the following in the server logs:
+```
+Ncat: Version 7.94SVN ( https://nmap.org/ncat )
+Ncat: Listening on [::]:80
+Ncat: Listening on 0.0.0.0:80
+Ncat: Connection from 10.107.0.11:63275.
+method:GET url:/ version:1.1
+Ncat: Connection from 10.107.0.11:41683.
+method:GET url:/lksjdklfanskdnckajsdfj_doesn_exit_1585 version:1.1
+Ncat: Connection from 10.107.0.11:55298.
+method:GET url:/server version:1.1
+Ncat: Connection from 10.107.0.11:39615.
+method:GET url:/a.out version:1.1
+Ncat: Connection from 10.107.0.11:58461.
+method:GET url:/FLAG%7Bhello_server_how_are_you%7D version:1.1
+
+```
+:+1: FLAG{hello_server_how_are_you}
+<hr>
+
 ### Rbac User api
 Description - The pentest report for our user API prototype came back and it had red everywhere.
 
