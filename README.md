@@ -868,17 +868,25 @@ When you're finished, provide the check server http://192.168.88.100 on port 80 
 Flag Format: FLAG{example_flag_content}
 
 Solution:
-First of all, setup SMTP/IMAP locally
-sudo apt install postfix
+I asked chatGPT to create a simple SMTP server that would received the emails, extract the STIX2 data, then write it to the API
 
-IGNORE this - tried a simple SMTP server
+This is what is cam up with
 ```
 import asyncore
 from smtpd import SMTPServer
-import imaplib
-import email
-from email.parser import BytesParser
-from email.policy import default
+import threading
+import time
+import json
+from flask import Flask, send_file
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Define a global list to store the iptable rules
+iptables_rules = []
+
+# Define the path to the blockrules file
+blockrules_file = "blockrules"
 
 # Define the SMTP server class
 class CustomSMTPServer(SMTPServer):
@@ -888,24 +896,32 @@ class CustomSMTPServer(SMTPServer):
         print(f"Recipients: {rcpttos}")
         print("Data:")
         print(data)
+        try:
+            stix_data = json.loads(data.decode('utf-8').split('\n\n')[1])
+            ip_addresses = [obj['value'] for obj in stix_data['objects'] if obj['type'] == 'ipv4-addr']
+            for ip in ip_addresses:
+                # Assuming you have a function to generate iptable commands
+                iptable_commands = generate_iptable_commands(ip)
+                for cmd in iptable_commands:
+                    iptables_rules.append(cmd)
+            write_blockrules_to_file()  # Write iptable rules to file after updating
+        except Exception as e:
+            print(f"Error processing STIX2 data: {e}")
 
-# Define the IMAP server class
-class CustomIMAPServer(asyncore.dispatcher):
-    def __init__(self, address):
-        asyncore.dispatcher.__init__(self)
-        self.create_socket()
-        self.connect(address)
+# Function to generate iptable commands
+def generate_iptable_commands(ip):
+    # Generate DROP rules for inbound and outbound connections
+    rules = [
+        f"-A INPUT -s {ip} -j DROP",
+        f"-A OUTPUT -d {ip} -j DROP"
+    ]
+    return rules
 
-    def handle_connect(self):
-        print("Connected to IMAP server")
-
-    def handle_close(self):
-        print("Disconnected from IMAP server")
-        self.close()
-
-    def handle_read(self):
-        data = self.recv(8192)
-        print("Received data from IMAP client:", data)
+# Function to write iptable rules to the blockrules file
+def write_blockrules_to_file():
+    with open(blockrules_file, 'w') as f:
+        for rule in iptables_rules:
+            f.write(rule + "\n")
 
 # Set up and start the SMTP server
 def start_smtp_server():
@@ -917,22 +933,22 @@ def start_smtp_server():
         smtp_server.close()
         print("SMTP server stopped.")
 
-# Set up and start the IMAP server
-def start_imap_server():
-    imap_server = CustomIMAPServer(('192.168.88.2', 110))  # Change the port as needed
-    print("IMAP server started.")
-    try:
-        asyncore.loop()
-    except KeyboardInterrupt:
-        imap_server.close()
-        print("IMAP server stopped.")
+# API endpoint to get block rules
+@app.route('/blockrules/blockrules')
+def get_block_rules():
+    return send_file(blockrules_file)
 
 if __name__ == "__main__":
-    import threading
     smtp_thread = threading.Thread(target=start_smtp_server)
-    imap_thread = threading.Thread(target=start_imap_server)
     smtp_thread.start()
-    imap_thread.start()
+    # Run Flask app
+    app.run(host='192.168.88.2', port=80)
 ```
-:+1: FLAG{ENTER_FLAG_HERE}
+The STMP logs revealed the flag after a few emails were received.
+```
+192.168.88.100 - - [13/Apr/2024 17:11:29] "GET /blockrules/blockrules HTTP/1.1" 200 -
+192.168.88.100 - - [13/Apr/2024 17:11:29] "GET /blockrules/FLAG%7Bf4st_thr34t_sh4r1ng%7D HTTP/1.1" 404 -
+192.168.88.2 - - [13/Apr/2024 17:11:29] "GET /blockrules/blockrules HTTP/1.1" 200 -
+```
+:+1: FLAG{f4st_thr34t_sh4r1ng}
 <hr>
