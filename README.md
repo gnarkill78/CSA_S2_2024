@@ -1055,7 +1055,9 @@ Using UNION select in the pages search field, testing for SSTI was achieved by e
 ```
 cn' UNION SELECT 'Custom Title', 'Custom Author', '{{ 7*7 }}', 'Custom Comments' AS new FROM books -- -
 ```
-This returned the value of 49 in the Description column of the table on the webpage which confirmed SSTI - insert image
+This returned the value of 49 in the Description column of the table on the webpage which confirmed SSTI
+
+![screenshot](49.png)
 
 It was then a matter of crafting a specific payload to check for system access, and then a remote shell
 The following returned the id of the www-data user
