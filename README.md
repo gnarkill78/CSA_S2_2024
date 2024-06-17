@@ -392,12 +392,19 @@ We just couldn't believe our eyes.
 Anyway, we can't launch it yet cos we're not done with all the features and apparently there are many security issues.
 
 Here's the findings and recommendations from the pentest report:
+
 Critical: Broken authentication, trivial authentication bypass (rec: use express-session for auth in front end)
+
 Critical: SQL injection (rec: use parameterized queries when talking to database)
+
 Critical: Lack of authentication between web server and API (rec: return 401 on all api calls if Authorization: token <shared_secret> incorrect or missing)
+
 High: cache synchronization issue, login does not always immediately work, sometimes still showing unauthenticated after login (rec: re-think caching) the /users/status form handling in the web service so that it talks to the API to update the user's status properly. GET /users/logout endpoint to log out the user with a logout button that only displays on the front end when the user is logged in
+
 Critical: Cache server exposed over network (rec: only expose it to internal services)
+
 High: SSRF between front and back end (rec: do not expose request path in parameter)
+
 High: DOM based cross site scripting (rec: escape input/output)
 
 Because of all that, we haven't dared touching the code yet. Can you show us how to do it properly?
