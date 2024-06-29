@@ -189,6 +189,145 @@ if __name__ == '__main__':
 :+1: FLAG{you-better-h4sh-that-password}
 <hr>
 
+### Bad APK
+Description - 
+---------- MALWARE ALERT ---------------
+DO NOT RUN THIS APP ON YOUR PHONE.
+Static analysis should be sufficient for this challenge.
+------------------------------------
+The security team has received reports that one of our corporate android devices had an application installed that was recently taken down from the play store. It seems like one of our managers installed a random game that has excessive permissions... again.
+
+While disciplinary actions are awaiting, we ask you to analyse this application for us for potential security impact.
+
+What is the fully qualified name of the app package? (format com.example.publisher.myapp)
+
+What permissions (full permission names) do the app request in relation to the phone's browser? (2 strings, in order of appearance)
+
+What domain does it exfiltrate the user's email address to? (2 dots in string)
+
+What is the domain of the mobile advertisement platform that the app sends the user's location data to? (2 dots in string)
+
+put all pieces of information in a file, carefully with no spaces in the end of each line (there should be 5 lines in total):
+
+com.example.publisher.myapp
+permission1
+permission2
+xyz.example1.com
+xyz.example2.com
+and hash the file using sha256 like so:
+
+sha256sum answers.txt
+then wrap the hash in FLAG{}, like FLAG{sha256}
+
+the correct answer should have this wc output:
+
+$ wc answers.txt 
+  5   5 187 answers.txt
+and the correct hash should end with 33
+
+Solution:
+I used apktool and Android Studio for this one
+apktool extract the AndroidManifest.xml file
+```
+<?xml version="1.0" encoding="utf-8" standalone="no"?><manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto" package="google.com.boxitsoft.superhockeyglow1" platformBuildVersionCode="27" platformBuildVersionName="8.1.0">
+    <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        <activity android:configChanges="keyboardHidden|locale|orientation" android:label="@string/app_name" android:launchMode="singleTask" android:name=".Main">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity android:configChanges="keyboardHidden|orientation" android:name="google.com.airpush.android.PushAds"/>
+        <receiver android:name="google.com.airpush.android.UserDetailsReceiver"/>
+        <receiver android:name="google.com.airpush.android.MessageReceiver"/>
+        <receiver android:name="google.com.airpush.android.DeliveryReceiver"/>
+        <service android:name="google.com.airpush.android.PushService">
+            <intent-filter>
+                <action android:name="google.com.airpush.android.PushServiceStart46673"/>
+            </intent-filter>
+        </service>
+        <receiver android:exported="true" android:name="google.com.google.android.apps.analytics.AnalyticsReceiver">
+            <intent-filter>
+                <action android:name="com.android.vending.INSTALL_REFERRER"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name="google.com.Leadbolt.AdNotification"/>
+        <receiver android:name="google.com.Leadbolt.AdNotification"/>
+        <receiver android:name="google.com.boxitsoft.BootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+        <service android:enabled="true" android:name="google.com.apperhand.device.android.AndroidSDKProvider"/>
+        <service android:enabled="true" android:name="google.com.boxitsoft.ServiceTemplate"/>
+        <receiver android:name="google.com.boxitsoft.MyStartServiceReceiver"/>
+    </application>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.SET_ORIENTATION"/>
+    <uses-permission android:name="android.permission.DEVICE_POWER"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS"/>
+    <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS"/>
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.htc.launcher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.motorola.launcher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.motorola.dlauncher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.fede.launcher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.lge.launcher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="org.adw.launcher.permission.READ_SETTINGS"/>
+    <uses-permission android:name="com.motorola.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.motorola.dlauncher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.lge.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+</manifest>
+```
+
+From there, the package name is listed as package="google.com.boxitsoft.superhockeyglow1"
+The browser permissions were fairly obvious -
+    <uses-permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS"/>
+    <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS"/>
+
+google.com.boxitsoft.superhockeyglow1
+com.android.browser.permission.WRITE_HISTORY_BOOKMARKS
+com.android.browser.permission.READ_HISTORY_BOOKMARKS
+www.latinsoulstudio.com
+api.airpush.com
+
+Running sha256sum on the file produces the correct hash - 2eed6e3a0add5740e8c052d7001ca9d74e633e04e77560608194354d154a1d33
+
+:+1: FLAG{2eed6e3a0add5740e8c052d7001ca9d74e633e04e77560608194354d154a1d33}
+<hr>
+
+### Bad png (FIRST BLOOD)
+Description - My bad wizard friend cast a spell on my phone and
+corrupted one of my precious pictures. Can you
+help me fix it? flag format:
+FLAG{ENTER_YOUR_FLAG_HERE}
+
+Solution
+Opened the image in hexed.it and noticed the magic bytes were incorrect
+
+Fixed them to read
+```
+89 50 4E 47 0D 0A 1A 0A
+```
+The file was still corrupt so I uploaded it into https://www.nayuki.io/page/png-file-chunk-inspector
+and noticed a lot of CRC-32 mismatches
+
+I also noticed that where the IDAT data should normally be, it was filled with HAXX
+
+Back to hexed.it and did a find/replace on HAXX to IDAT. Exported the file, opened it and voila, the flag.
+
+:+1: FLAG{IMAGIO_REPARO}
+<hr>
+
 ### Bee Cauldron
 Description - I made a honeypot and it finally got a hit! There was some file in the logs called "fun.run", but it looks like it deleted itself. Can you recover the malware for me? 
 Flag format: FLAG{bee-couldron}
@@ -1187,6 +1326,112 @@ its not that easy!
 :+1: FLAG{s3lf-extr4cting-g00dness}
 <hr>
 
+### Book Crumbs
+Description
+I found this suspicious golang binary on my linux server.. can you find out who wrote it?
+
+malware hash: 7ce5fe5f21c7d3305b7cf9b7d8f052902e46b6160ce49aa1e91bcfbc09179ba5
+
+Flag format: FLAG{th1s-1s-y0ur-fl4g}
+
+Solution:
+https://www.hybrid-analysis.com/sample/7ce5fe5f21c7d3305b7cf9b7d8f052902e46b6160ce49aa1e91bcfbc09179ba5/65dd4150db0240951f0cabf4
+File Details
+
+keylogger
+
+Filename
+keylogger
+
+Size
+2.3MiB (2397069 bytes)
+
+Type
+elf 64bits executable
+
+Description
+ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, with debug_info, not stripped
+
+Architecture
+LINUX
+
+SHA256 - 7ce5fe5f21c7d3305b7cf9b7d8f052902e46b6160ce49aa1e91bcfbc09179ba5
+
+MD5 - 673f5474789fa16ad14d897fd95509bc
+
+SHA1 - fde4f5c3e4469f9350d2cb108b5e40d9f5134af1
+
+ssdeep - 24576:XCi6+i1wJ2k6UZcGpQ18GUMQf5xLe6YDCjmPIxt6cfilnn5C1oRajZDlv1:yivi1wJ2k6Pky6MjICfZ5MoEjn1 
+
+
+https://www.virustotal.com/gui/file/7ce5fe5f21c7d3305b7cf9b7d8f052902e46b6160ce49aa1e91bcfbc09179ba5/details
+MD5 - 673f5474789fa16ad14d897fd95509bc 
+SHA-1 - fde4f5c3e4469f9350d2cb108b5e40d9f5134af1 
+SHA-256 - 7ce5fe5f21c7d3305b7cf9b7d8f052902e46b6160ce49aa1e91bcfbc09179ba5 
+Vhash - cebbaf2c8ae7d1b50552e9a860c0fc96 
+SSDEEP - 24576:XCi6+i1wJ2k6UZcGpQ18GUMQf5xLe6YDCjmPIxt6cfilnn5C1oRajZDlv1:yivi1wJ2k6Pky6MjICfZ5MoEjn1 
+TLSH - T150B58C477CE058AAC0AA93328EA651A27B71BC490B7127D73E50B3783F327D45E76718 
+File type - ELF executable 
+Magic - ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, with debug_info, not stripped 
+Telfhash - t1f01373446cf60e5669da1377ac3805c9137fe00f156879996e68c73939af088293bb3a 
+TrID - ELF Executable and Linkable format (Linux) (50.1%)   ELF Executable and Linkable format (generic) (49.8%) 
+DetectItEasy - ELF64   Operation system: Unix [EXEC AMD64-64]   Compiler: Go (1.10.x-1.17.x) [EXEC AMD64-64] 
+File size - 2.29 MB (2397069 bytes)
+History
+First Submission - 2024-02-27 01:46:57 UTC 
+Last Submission - 2024-02-27 01:46:57 UTC 
+Last Analysis - 2024-03-15 20:41:42 UTC
+
+
+github.com/MarinX/keylogger
+github.com/sirupsen/logrus
+pathgithub.com/hotslytherin/keyloggermodgithub.com/hotslytherin/keylogger(devel)depgithub.com/MarinX/keyloggerv0.0.0-20210528193429-a54d7834cc1ah1:ItKXWegGGThcahUf+ylKFa5pwqkRJofaOyeGdzwO2mM=depgithub.com/sirupsen/logrusv1.9.3h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=depgolang.org/x/sysv0.0.0-20220715151400-c0bba94af5f8h1:0A+M6Uqn+Eje4kHMK80dtF3JCXC4ykBgQG4Fe06QRhQ=build-buildmode=exebuild-compiler=gcbuild-trimpath=truebuildCGO_ENABLED=0buildGOARCH=amd64buildGOOS=linuxbuildGOAMD64=v1buildvcs=gitbuildvcs.revision=a54d7834cc1a2d37536127ab438e6084887bc55abuildvcs.time=2021-05-28T19:34:29Zbuildvcs.modified=true
+
+Malware strings reveal github page of hotslytherin - https://github.com/hotslytherin/hotslytherin
+
+https://api.github.com/users/hotslytherin/events/public
+
+reveals email - admin@expelliarmus.pro and name of Sebastian
+
+Did a DNS lookup of expelliarmus.pro at https://www.nslookup.io/
+
+Which revealed the flag
+
+:+1: FLAG{wh0-1s-th1s-h4x0r}
+<hr>
+
+### Dead Turkey (FIRST BLOOD)
+Description - Our team have been getting reports from users that their accounts have been hacked. Multiple IP addresses from those hacked users were the same.. I wonder if there's been a credential stuffing
+attack on our website. We'll send you the logs.. let us know if you can find anything. 
+Flag format: FLAG{Ent3r_Y0ur_Fl4g_h3r3}
+
+Solution:
+Imported into excel and looked at the data
+
+Curiosity made me wonder what FLAG looked like in decimal and it was 70 76 65 71 which happened to be an IP address
+
+Ended up filterout out 302 and GET requests and manipulating the remaing 5 IPs for the flag
+
+
+70 76 65 71 123 53 116 117 102 102 49 110 103 95 121 117 109 125
+
+:+1: FLAG{5tuff1ng_yum}
+<hr>
+
+### First 8 bytes
+Description - I ran some random program on the internet and it started chomping off the first 8 bytes of every one of my files... Can you recover this precious flag for me? 
+Flag Format: FLAG{here-is-the-flag!}
+
+Corrupt zip file
+
+Opened in hexed.it and fixed magic bytes (first 8 bytes)
+
+Made them 50 4B 03 04 and exported the file
+
+Opened it and opened flag.txt
+
+:+1: FLAG{its-not-a-flag-until-it-is-a-flag}
+<hr>
 
 ### Forum troubles
 Description - As a threat intelligence officer at the ministry, you've been tasked to infiltrate the recently resurfaced XSRF forum after the CSRF take down.
@@ -1373,6 +1618,373 @@ method:GET url:/FLAG%7Bhello_server_how_are_you%7D version:1.1
 :+1: FLAG{hello_server_how_are_you}
 <hr>
 
+### LARGE FLAG MODEL
+Description - I recently started building my own LLM... I am not sure what I'm doing yet, but I managed to get some sort of next-token prediction algorithm working with
+only one word using some data from Wikipedia pages. I've heard all about security concerns on leaking training data, so for testing, I've hidden a flag in the training data to see if you can find it. Flag
+Format: FLAG{your_example_flag_goes_here}
+
+Code provided
+```
+#!/usr/bin/env python3
+
+import sys
+import random
+import pickle
+import time
+
+def predict(word_sequence, model, sequence_length=8):
+    '''
+    sequence length defines the maximum limit of words to spit out
+    '''
+    try:
+        if len(word_sequence) >= sequence_length:
+            return word_sequence
+
+        start_word = word_sequence[-1]
+        
+        # Check if start_word exists in the model
+        if start_word not in model:
+            return None
+
+        candidates = model[start_word]
+        # print(candidates)
+        candidates_sorted = sorted(candidates, key=lambda x: x[1], reverse=True)
+
+        most_probable = candidates_sorted[random.randrange(0, min(3, len(candidates_sorted)))] # pick between top 3 candidates
+        word_sequence.extend(most_probable[0])
+
+        return predict(word_sequence, model, sequence_length)
+    except RecursionError:
+        print("Recursion limit exceeded. Skipping word.")
+        return word_sequence
+
+def main():
+    try:
+        model_file = open('model.pkl', 'rb')
+        model = pickle.load(model_file)
+        model_file.close()
+    except FileNotFoundError:
+        print("Error: Model file not found.")
+        return
+
+    try:
+        words_file = open('words.txt', 'r')
+        words = words_file.read().split()
+        words_file.close()
+    except FileNotFoundError:
+        print("Error: Words file not found.")
+        return
+
+    # Set maximum recursion depth
+    sys.setrecursionlimit(3000)  # Adjust this limit as needed
+
+    for word in words:
+        print("Prompt:", word)
+        prediction = predict([word], model)
+        if prediction is not None:
+            print(' '.join(prediction))
+            print()
+        time.sleep(0.1)  # Sleep for one second between each word
+
+if __name__ == "__main__":
+    main()
+```
+Solution.
+Extracted all proper words from model.pkl file to a file called words.txt
+```
+import re
+
+# Open the input file
+with open('temp.txt', 'r') as file:
+    # Read the single line of data
+    line = file.readline()
+
+    # Use regular expression to find words enclosed in single quotes
+    words = re.findall(r"'(.*?)'", line)
+
+# Define a function to strip non-alphabetic characters from a word
+def strip_non_alpha(word):
+    return re.sub(r'[^a-zA-Z]', '', word)
+
+# Strip non-alphabetic characters and leading/trailing whitespace from each word
+stripped_words = [strip_non_alpha(word.strip()) for word in words]
+
+# Open the output file to write the extracted words
+with open('words.txt', 'w') as output_file:
+    # Write each word (after stripping non-alphabetic characters and whitespace) to the output file
+    for word in stripped_words:
+        output_file.write(word + '\n')
+
+print("Words extracted, stripped of non-alphabetic characters and leading/trailing whitespace, and written to words.txt")
+
+```
+Modified the original source code to then read each line of word.txt and enter that at the prompt
+```
+#!/usr/bin/env python3
+
+import sys
+import random
+import pickle
+
+
+def predict(word_sequence, model, sequence_length=8, max_depth=20):
+    '''
+    sequence length defines the maximum limit of words to spit out
+    '''
+    if len(word_sequence) >= sequence_length or max_depth <= 0:
+        return word_sequence
+
+    start_word = word_sequence[-1]
+    candidates = model.get(start_word, [])  # If start_word is not in the model, return an empty list
+    if not candidates:  # If there are no candidates for the start word, return the sequence as is
+        return word_sequence
+
+    candidates_sorted = sorted(candidates, key=lambda x: x[1], reverse=True)
+
+    most_probable = candidates_sorted[random.randrange(0, min(10, len(candidates)))]  # Pick between top 3 candidate>
+    word_sequence.extend(most_probable[0])
+
+    return predict(word_sequence, model, sequence_length, max_depth - 1)
+
+
+model_file = open('model.pkl', 'rb')
+model = pickle.load(model_file)
+model_file.close()
+
+# Read words from words.txt
+with open('words.txt', 'r') as words_file:
+    for word in words_file:
+        prompt = word.strip()
+        if prompt:  # Ensure the prompt is not empty
+            print("prompt:", prompt)  # Print the word as the prompt
+            print(' '.join(predict([prompt], model)))
+```
+
+Executed that and wrote to results.txt
+```
+python3 solve.py > results.txt
+```
+
+Used grep to try and find 'FLAG' but that would have been too easy.
+Grepping for flag idientified some interesting output
+```
+very hidden flag starts with all uppercase characters
+consumer electronics.[citation needed] the very hidden flag starts with all uppercase
+consumer electronics.[citation needed] the very hidden flag starts with
+outside the range of most consumer electronics.[citation needed] the very hidden flag starts
+hidden flag starts with all uppercase characters (including blanks
+flag starts with all uppercase characters flag, then curly
+flag starts with all uppercase characters is the
+hidden flag starts with all you need". this
+flag starts with all you need". model training took "14
+flag starts with all uppercase characters flag, then curly
+security concern. these are hidden flag starts with all uppercase characters flag, then
+hidden flag starts with a context window larger
+hidden flag starts with all uppercase characters flag, then curly brackets,
+security concern. these are hidden flag starts with all uppercase
+hidden flag starts with a model is the
+hidden flag starts with all you need". model
+jack police flag starts with all uppercase characters
+jack police flags civil flag starts with a
+jack police flag starts with all uppercase characters
+
+```
+Slowly working through different greps and it resulted in this
+```
+very hidden flag starts with all uppercase characters flag starts with all uppercase characters flag, 
+then curly brackets, then the lowercase words parrots are loud but wisdom is silent joined by 
+underscore and ends with a closing bracket.
+```
+
+:+1: FLAG{parrots_are_loud_but_wisdom_is_silent}
+<hr>
+
+### Markdown editor
+Description - I made a markdown editor to learn Ruby on Rails. I shared it with my friends and they all laughed at me saying that there were critical vulnerabilities everywhere. They were able to read sensitive files and break into my server... Can you patch the code for me?
+
+The code along with Dockerfile has been provided to help you set up the app for testing.
+
+After patching, give the check server on port 80 the URL to the hosted instance of your patched app, and my friends will run their hacks and send you the flag if it's patched.
+
+Flag Format: FLAG{words-separated-by-dashes}
+
+Solution:
+
+The docker file did not compile initially so I had chatGPT analyse it and repair it
+```
+# Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
+ARG RUBY_VERSION=3.2.3
+FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
+
+# Rails app lives here
+WORKDIR /rails
+
+# Set production environment
+ENV RAILS_ENV="production" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_WITHOUT="development"
+
+# Throw-away build stage to reduce size of final image
+FROM base as build
+
+# Install packages needed to build gems
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential git libvips pkg-config
+
+# Install application gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install && \
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
+    bundle exec bootsnap precompile --gemfile
+
+# Copy application code
+COPY . .
+
+# Precompile bootsnap code for faster boot times
+RUN bundle exec bootsnap precompile app/ lib/
+
+# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+
+# Final stage for app image
+FROM base
+
+# Install packages needed for deployment
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl libsqlite3-0 libvips pandoc groff ghostscript && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy built artifacts: gems, application
+COPY --from=build /usr/local/bundle /usr/local/bundle
+COPY --from=build /rails /rails
+
+# Run and own only the runtime files as a non-root user for security
+RUN useradd -m rails && \
+    chown -R rails:rails /rails
+
+USER rails
+
+# Entrypoint prepares the database.
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+
+# Start the server by default, this can be overwritten at runtime
+EXPOSE 3000
+CMD ["./bin/rails", "server"]
+
+```
+
+Once that compiled, the checkserver response threw the error indicating it was still vulnerable (file inclusion)
+
+Again, I asked chatGPT to look at the .rb file in app/controllers named application_controller.rb and address the issue
+
+This is what is gave me
+```
+class ApplicationController < ActionController::Base
+  def application
+    render "layouts/application"
+  end
+
+  def upload
+    content = params[:note]
+
+    random_filename = SecureRandom.hex(10) + '.md'
+
+    File.open(upload_path(random_filename), 'wb') do |file|
+      file.write(content.read)
+    end
+
+    render plain: "#{random_filename}"
+  end
+
+  def download
+    filename = params[:filename]
+
+    if valid_filename?(filename)
+      send_file(upload_path(filename), filename: filename, type: "text/plain")
+    else
+      render plain: "Invalid filename", status: :unprocessable_entity
+    end
+  end
+
+def convert_to_pdf
+  filename = params[:filename]
+
+  if valid_filename?(filename)
+    pdf_filename = "#{filename}.pdf"
+    pdf_file_path = Rails.root.join('public', 'uploads', pdf_filename)
+
+    command = "pandoc --pdf-engine=pdfroff -f markdown -t pdf #{upload_path(filename).to_s.shellescape} -o #{pdf_file_path.to_s.shellescape}"
+    system(command)
+
+    if File.exist?(pdf_file_path)
+      send_file(pdf_file_path, filename: pdf_filename, type: "application/pdf")
+    else
+      render plain: "Conversion failed", status: :unprocessable_entity
+    end
+  else
+    render plain: "Invalid filename", status: :unprocessable_entity
+  end
+end
+
+  private
+
+  def upload_path(filename)
+    Rails.root.join('public', 'uploads', filename)
+  end
+
+  def valid_filename?(filename)
+    filename =~ /\A[\w.-]+\z/
+  end
+end
+```
+
+Ran the docker build again then ran the docker and tested it and it spat out the flag.
+
+```
+I, [2024-04-14T04:16:00.652204 #73]  INFO -- : [7448c442-4c28-43f1-bb93-c6b7ae48bd19] Started GET "/download?filename=../../../../../../../../../../../etc/passwd" for 103.109.113.220 at 2024-04-14 04:16:00 +0000
+I, [2024-04-14T04:16:00.676410 #73]  INFO -- : [7448c442-4c28-43f1-bb93-c6b7ae48bd19] Processing by ApplicationController#download as */*
+I, [2024-04-14T04:16:00.676559 #73]  INFO -- : [7448c442-4c28-43f1-bb93-c6b7ae48bd19]   Parameters: {"filename"=>"../../../../../../../../../../../etc/passwd"}
+I, [2024-04-14T04:16:00.712580 #73]  INFO -- : [7448c442-4c28-43f1-bb93-c6b7ae48bd19] Completed 422 Unprocessable Entity in 36ms (Views: 24.2ms | ActiveRecord: 0.0ms | Allocations: 576)
+I, [2024-04-14T04:16:00.807727 #11]  INFO -- : [41431e33-8db1-4fde-925f-9762e9acb028] Started GET "/download?filename=../../app/views/layouts/application.html.erb" for 103.109.113.220 at 2024-04-14 04:16:00 +0000
+I, [2024-04-14T04:16:00.835160 #11]  INFO -- : [41431e33-8db1-4fde-925f-9762e9acb028] Processing by ApplicationController#download as */*
+I, [2024-04-14T04:16:00.835369 #11]  INFO -- : [41431e33-8db1-4fde-925f-9762e9acb028]   Parameters: {"filename"=>"../../app/views/layouts/application.html.erb"}
+I, [2024-04-14T04:16:00.854654 #11]  INFO -- : [41431e33-8db1-4fde-925f-9762e9acb028] Completed 422 Unprocessable Entity in 19ms (Views: 4.2ms | ActiveRecord: 0.0ms | Allocations: 576)
+I, [2024-04-14T04:16:00.959113 #62]  INFO -- : [53500a60-a862-48ab-a26a-28344b03f2df] Started GET "/download?filename=....////....////app/views/layouts/application.html.erb" for 103.109.113.220 at 2024-04-14 04:16:00 +0000
+I, [2024-04-14T04:16:00.984048 #62]  INFO -- : [53500a60-a862-48ab-a26a-28344b03f2df] Processing by ApplicationController#download as */*
+I, [2024-04-14T04:16:00.984214 #62]  INFO -- : [53500a60-a862-48ab-a26a-28344b03f2df]   Parameters: {"filename"=>"....////....////app/views/layouts/application.html.erb"}
+I, [2024-04-14T04:16:01.010717 #62]  INFO -- : [53500a60-a862-48ab-a26a-28344b03f2df] Completed 422 Unprocessable Entity in 20ms (Views: 2.4ms | ActiveRecord: 0.0ms | Allocations: 576)
+I, [2024-04-14T04:16:01.115846 #13]  INFO -- : [6822f234-a779-4b9e-bb07-6e8eba51315b] Started GET "/convert2pdf?filename=test%3Bsleep+10;" for 103.109.113.220 at 2024-04-14 04:16:01 +0000
+I, [2024-04-14T04:16:01.137204 #13]  INFO -- : [6822f234-a779-4b9e-bb07-6e8eba51315b] Processing by ApplicationController#convert_to_pdf as */*
+I, [2024-04-14T04:16:01.137401 #13]  INFO -- : [6822f234-a779-4b9e-bb07-6e8eba51315b]   Parameters: {"filename"=>"test;sleep 10;"}
+I, [2024-04-14T04:16:01.171522 #13]  INFO -- : [6822f234-a779-4b9e-bb07-6e8eba51315b] Completed 422 Unprocessable Entity in 25ms (Views: 3.4ms | ActiveRecord: 0.0ms | Allocations: 576)
+I, [2024-04-14T04:16:01.240605 #73]  INFO -- : [d69e6af2-c939-48c3-9d58-25217d6e1c85] Started GET "/" for 103.109.113.220 at 2024-04-14 04:16:01 +0000
+I, [2024-04-14T04:16:01.256138 #73]  INFO -- : [d69e6af2-c939-48c3-9d58-25217d6e1c85] Processing by ApplicationController#application as */*
+I, [2024-04-14T04:16:01.449571 #73]  INFO -- : [d69e6af2-c939-48c3-9d58-25217d6e1c85]   Rendered layout layouts/application.html.erb (Duration: 134.4ms | Allocations: 2952)
+I, [2024-04-14T04:16:01.451474 #73]  INFO -- : [d69e6af2-c939-48c3-9d58-25217d6e1c85] Completed 200 OK in 195ms (Views: 194.1ms | ActiveRecord: 0.0ms | Allocations: 3698)
+I, [2024-04-14T04:16:01.560660 #73]  INFO -- : [68fe4ac3-9630-4af2-8bf7-ea5cf74f24df] Started POST "/upload" for 103.109.113.220 at 2024-04-14 04:16:01 +0000
+I, [2024-04-14T04:16:01.562695 #73]  INFO -- : [68fe4ac3-9630-4af2-8bf7-ea5cf74f24df] Processing by ApplicationController#upload as */*
+I, [2024-04-14T04:16:01.563151 #73]  INFO -- : [68fe4ac3-9630-4af2-8bf7-ea5cf74f24df]   Parameters: {"authenticity_token"=>"[FILTERED]", "note"=>#<ActionDispatch::Http::UploadedFile:0x00007f68c8dccae8 @tempfile=#<Tempfile:/tmp/RackMultipart20240414-73-8i9mp6>, @content_type=nil, @original_filename="note", @headers="Content-Disposition: form-data; name=\"note\"; filename=\"note\"\r\n">}
+I, [2024-04-14T04:16:01.599932 #73]  INFO -- : [68fe4ac3-9630-4af2-8bf7-ea5cf74f24df] Completed 200 OK in 37ms (Views: 0.5ms | ActiveRecord: 0.0ms | Allocations: 1421)
+I, [2024-04-14T04:16:01.684075 #13]  INFO -- : [eea350e5-1849-410b-9062-0633185500dc] Started GET "/download?filename=7cda0631e7de00b3cb4b.md" for 103.109.113.220 at 2024-04-14 04:16:01 +0000
+I, [2024-04-14T04:16:01.694128 #13]  INFO -- : [eea350e5-1849-410b-9062-0633185500dc] Processing by ApplicationController#download as */*
+I, [2024-04-14T04:16:01.694318 #13]  INFO -- : [eea350e5-1849-410b-9062-0633185500dc]   Parameters: {"filename"=>"7cda0631e7de00b3cb4b.md"}
+I, [2024-04-14T04:16:01.709107 #13]  INFO -- : [eea350e5-1849-410b-9062-0633185500dc] Sent file /rails/public/uploads/7cda0631e7de00b3cb4b.md (13.2ms)
+I, [2024-04-14T04:16:01.709529 #13]  INFO -- : [eea350e5-1849-410b-9062-0633185500dc] Completed 200 OK in 15ms (ActiveRecord: 0.0ms | Allocations: 479)
+I, [2024-04-14T04:16:01.800309 #24]  INFO -- : [026a995b-90b7-45b5-93b6-354ccc91ecb9] Started GET "/convert2pdf?filename=7cda0631e7de00b3cb4b.md" for 103.109.113.220 at 2024-04-14 04:16:01 +0000
+I, [2024-04-14T04:16:01.827471 #24]  INFO -- : [026a995b-90b7-45b5-93b6-354ccc91ecb9] Processing by ApplicationController#convert_to_pdf as */*
+I, [2024-04-14T04:16:01.827624 #24]  INFO -- : [026a995b-90b7-45b5-93b6-354ccc91ecb9]   Parameters: {"filename"=>"7cda0631e7de00b3cb4b.md"}
+I, [2024-04-14T04:16:06.253456 #24]  INFO -- : [026a995b-90b7-45b5-93b6-354ccc91ecb9] Sent file /rails/public/uploads/7cda0631e7de00b3cb4b.md.pdf (16.2ms)
+I, [2024-04-14T04:16:06.254002 #24]  INFO -- : [026a995b-90b7-45b5-93b6-354ccc91ecb9] Completed 200 OK in 4426ms (ActiveRecord: 0.0ms | Allocations: 857)
+I, [2024-04-14T04:16:06.352581 #15]  INFO -- : [696f8228-13f2-4a6b-9fd5-5e09963209d1] Started GET "/FLAG%7Bd0nt-let-them-derail-y0u%7D" for 103.109.113.220 at 2024-04-14 04:16:06 +0000
+E, [2024-04-14T04:16:06.361201 #15] ERROR -- : [696f8228-13f2-4a6b-9fd5-5e09963209d1]
+[696f8228-13f2-4a6b-9fd5-5e09963209d1] ActionController::RoutingError (No route matches [GET] "/FLAG%7Bd0nt-let-them-derail-y0u%7D"):
+
+```
+
+:+1: FLAG{d0nt-let-them-derail-y0u}
+<hr>
+
 ### microservices
 Description - We heard that breaking an app up into microservices makes everything more secure, easy to maintain and all of that 
 good stuff..
@@ -1410,13 +2022,279 @@ Because of all that, we haven't dared touching the code yet. Can you show us how
 Patch all the vulnerabilities mentioned above following the recommendations, and implement these new features securely:
 When you're done let the check server know your IP address and we'll test it again.
 
-Flag format: FLAG{Enter-YoUr_Flag-h3r3}x
+Flag format: FLAG{Enter-YoUr_Flag-h3r3}
 
 Solution:
 See zip file - https://github.com/gnarkill78/CSA_S2_2024/blob/main/microservices.zip
 
 :+1: FLAG{m1cr0s3rv1c3s_ar3_c0mplic4t3d}
 <hr>
+
+### Noise reduction (FIRST BLOOD)
+Description
+The new junior threat intelligence guy came up with a bunch of rules we should apply to our suricata, presumable off github or stackoverflow...
+
+The file is too big and the senior SOC guys can't be even be bothered looking at it. Can you reduce the size of the rules and filter out the ones we don't need?
+The Suricata IDS gets all the traffic from the router, which handles all inbound and outbound traffic for our intranet and DMZ. The intranet is all behind NAT, but servers in the DMZ has some internet facing IPs and such in a /24. AWS cloudfront (and their WAF) is supposed* to protect us from web attacks, but who knows?
+
+Submit your filtered down suricata rules to our check server on port 80 and we'll have a look at it. Make sure your rules end with a new line.
+
+Flag format: FLAG{}
+
+This is the list of rules that returned the flag
+```
+alert http any any -> any any (msg:"Attempt to access sensitive directories"; content:"/"; http_uri; pcre:"/(\/|%2F)(etc|dev|proc|var|tmp|usr|home|boot|lib|opt|mnt|media|srv|root)(\/|%2F|$)/i"; classtype:attempted-recon; sid:50200001; rev:1;)
+alert http any any -> any any (msg:"Possible XSS attack"; pcre:"/(<|%3C|%253C)script|on\w+(%3D|=)|javascript(:|%3A)/smi"; classtype:web-application-attack; sid:50100001; rev:1;)
+alert http any any -> any any (msg:"ExacqVision Default Login Attempt"; content:"POST"; http_method; content:"/service.web"; http_uri; content:"action=login"; http_client_body; content:"u=admin"; http_client_body; content:"p=admin256"; http_client_body; classtype:default-login-attempt; sid:30000001; rev:1;)
+alert http any any -> any any (msg:"Detect common files - robots.txt"; content:"/robots.txt"; http_uri; classtype:attempted-recon; sid:40000001; rev:1;)
+alert http any any -> any any (msg:"Detect common files - sitemap"; content:"/sitemap"; http_uri; classtype:attempted-recon; sid:40000002; rev:1;)
+alert http any any -> any any (msg:"Exploit CVE-2020-13942 on Apache Unomi"; flow:to_server,established; content:"POST"; http_method; content:"/context.js"; http_uri; content:"Runtime"; http_client_body; content:"getRuntime"; distance:0; http_client_body; content:"exec"; distance:0; http_client_body; reference:cve,CVE-2020-13942; classtype:web-application-attack; sid:202013942; rev:1;)
+alert http any any -> any any (msg:"RCE on Apache Nifi"; flow:to_server,established; content:"PUT"; http_method; content:"/nifi-api/processors/"; startswith; http_uri; content:"\"Command\""; http_client_body; classtype:web-application-attack; sid:20202283; rev:1;)
+alert http any any -> any any (msg:"Exploit CVE-2020-27130 on Cisco Security Manager - Download arbitrary file"; flow:to_server,established; content:"GET"; http_method; pcre:"/^\/(athena\/(xdmProxy\/(xdmConfig|xdmResources)|itf\/resultsFrame\.jsp)|cwhp\/(Xmp|Sample)FileDownloadServlet)/U"; content:"../"; distance:0; http_uri; reference:cve,CVE-2020-27130; classtype:web-application-attack; sid:2020271301; rev:1;)
+alert http any any -> any any (msg:"Exploit CVE-2020-27131 on Cisco Security Manager"; flow:to_server,established; content:"POST"; http_method; pcre:"/^(\/CSCOnm\/servlet\/(SecretService\.jsp|com.cisco.nm.cmf.servlet\.(CsJaasServiceServlet|AuthTokenServlet|ClientServicesServlet|SecretServiceServlet)))|\/athena\/CTMServlet/U"; content:"|ac ed 00 05|"; startswith; http_client_body; content:"java/lang/Runtime"; distance:0; http_client_body; reference:cve,CVE-2020-27131; classtype:web-application-attack; sid:2020271311; rev:1;)
+alert http any any -> any 7001 (msg:"Exploit CVE-2021-2109 on Oracle Weblogic Server"; flow:to_server,established; content:"/console/consolejndi.portal"; startswith; http_uri; content:"com.bea.console.handles.JndiBindingHandle"; content:"AdminServer"; distance:0; reference:cve,CVE-2021-2109; classtype:web-application-attack; sid:20212109; rev:1;)
+alert http any any -> any 7001 (msg:"Exploit CVE-2020-2109 (chains with CVE-2020-14750) Oracle Weblogic Server"; flow:to_server,established; content:"/console/"; startswith; http_uri; pcre:"/\/console\/(css|images)\//"; content:"2e"; nocase; distance:1; http_raw_uri; content:"consolejndi.portal"; distance:1; http_uri; reference:cve,CVE-2021-2109; classtype:web-application-attack; sid:20212109; rev:1;)
+alert http any any -> any any (msg:"Exploit CVE-2020-8209 on XenMobile"; flow:to_server,established; content:"/jsp/help-sb-download.jsp"; startswith; http_uri; reference:cve,CVE-2020-8209; classtype:web-application-attack; sid:20202255; rev:1;)
+alert http any any -> any 8000 (msg:"Exploit CVE-2020-16846 on SaltStack Salt"; flow:established,to_server; content:"POST"; http_method; content:"/run"; startswith; http_uri; content:"client=ssh"; http_client_body; content:"ssh_priv="; http_client_body; content:"%20"; distance:0; http_client_body; reference:cve,CVE-2020-16846; classtype:web-application-attack; sid:202016846; rev:1;)
+alert http any any -> any 7001 (msg:"Exploit CVE-2020-14750 on Oracle Weblogic Server"; flow:established,to_server; content:"/console/"; startswith; http_uri; pcre:"/^(css|images)\//UR"; content:"2e"; nocase; distance:1; http_raw_uri; content:"console.portal"; distance:1; http_uri; reference:cve,CVE-2020-14750; reference:cve,CVE-2020-14882; classtype:web-application-attack; sid:202014750; rev:1;)
+alert http any any -> any any (msg:"Exploit CVE-2020-12146 on Silver Peak Unity Orchestrator"; flow:established,to_server; content:"POST"; http_method; content:"/gms/rest/debugFiles/delete"; startswith; http_uri; pcre:"/(localhost|127\.0\.0\.1)/W"; content:"../phantomGenImg.js"; http_client_body; reference:cve,CVE-2020-12145; reference:cve,CVE-2020-12146; classtype:web-application-attack; sid:20202233; rev:1;)
+alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-admin/admin-ajax.php"; content:"action=wpda_gall_load_image_info"; content:"gallery_current_index="; http_method; classtype:web-application-attack; sid:22022002; rev:1;)
+alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-admin/admin.php?page=rsvp-admin-export"; http_method; classtype:web-application-attack; sid:22022003; rev:1;)
+alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-content/plugins/"; http_method; classtype:web-application-attack; rev:1; content:"/downloadpdffile.php"; content:"fileName="; sid:22015002; content:"/controller/download.php"; content:"filepath=/"; sid:22015003; content:"/includes/layout-settings.php"; content:"layout_settings_id="; sid:22016001; content:"/css.php"; content:"interval="; sid:22016002; content:"/js.php"; content:"interval="; sid:22016003; content:"/modules/syntax_highlight.php"; content:"libpath="; sid:22008001; content:"/view/sniplets/warning.php"; content:"text="; sid:22008002;) alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-admin/admin-ajax.php"; content:"action=wpda_gall_load_image_info"; content:"gallery_current_index="; http_method; classtype:web-application-attack; sid:22022002; rev:1;) alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-admin/admin.php?page=rsvp-admin-export"; http_method; classtype:web-application-attack; sid:22022003; rev:1;)
+alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-content/plugins/"; http_method; classtype:web-application-attack; rev:1; content:"/downloadpdffile.php"; content:"fileName="; sid:22015002; content:"/controller/download.php"; content:"filepath=/"; sid:22015003; content:"/includes/layout-settings.php"; content:"layout_settings_id="; sid:22016001; content:"/css.php"; content:"interval="; sid:22016002; content:"/js.php"; content:"interval="; sid:22016003; content:"/modules/syntax_highlight.php"; content:"libpath="; sid:22008001; content:"/view/sniplets/warning.php"; content:"text="; sid:22008002;) alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-admin/admin-ajax.php"; content:"action=wpda_gall_load_image_info"; content:"gallery_current_index="; http_method; classtype:web-application-attack; sid:22022002; rev:1;) alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-admin/admin.php?page=rsvp-admin-export"; http_method; classtype:web-application-attack; sid:22022003; rev:1;) alert http any any -> any any (msg:"WordPress Plugin Vulnerability Detected"; http_uri; content:"/wp-admin/admin.php?page=rsvp-admin-export"; http_method; classtype:web-application-attack; sid:22022003; rev:1;)
+alert http any any -> any any (msg:"Apache Struts 2 Vulnerability Detected"; http_uri; http_method; classtype:web-application-attack; rev:1; content:"/user.action"; content:"name="; content:"java.lang.ProcessBuilder"; content:"java.lang.String"; http_client_body; sid:22013001; content:"/index.action"; content:"redirect|3A|http"; http_uri; sid:22013002; content:"/index.action"; content:"redirect|3A|"; content:"java.lang."; http_uri; sid:22013003; content:"/index.action"; content:"action|3A|"; content:"java.lang."; http_uri; sid:22013004; content:"/index.action"; content:"redirectAction|3A|"; content:"java.lang."; http_uri; sid:22013005; content:"/login.action"; content:"redirect|3A|"; content:"java.lang."; http_uri; sid:22013006; content:"/login.action"; content:"action|3A|"; content:"java.lang."; http_uri; sid:22013007; content:"/login.action"; content:"redirectAction|3A|"; content:"java.lang."; http_uri; sid:22013008; content:"/login.action"; content:"password="; nocase; content:"java.lang.ProcessBuilder"; content:"java.lang.String"; http_client_body; sid:22007003;)
+alert http any any -> any any (msg:"Joomla! Local File Inclusion Vulnerability Detected"; http_uri; http_method; classtype:web-application-attack; rev:1; content:"/index.php/component/chronoforums2/profiles/avatar/u1"; content:"av="; content:"../"; nocase; sid:22021003; content:"/index.php"; content:"option=com_rsfiles&task=files.display&path="; nocase; content:"../"; sid:22007002; content:"/index.php"; content:"option=com_imagebrowser&folder="; content:"../"; sid:22008004; content:"/index.php"; content:"option=com_extplorer&action=show_error&dir="; content:"..%2F%2F"; nocase; sid:22008005; content:"/components/com_ionfiles/download.php"; content:"file"; content:"../"; sid:22008007; content:"/index.php"; content:"option=com_biblestudy&id=1&view=studieslist&controller="; content:"../"; sid:22010001; content:"/index.php"; content:"option=com_ccnewsletter&controller="; content:"../"; sid:22010003;)
+alert http any any -> any any (msg:"Vulnerability Detected"; http_uri; http_method; classtype:web-application-attack; rev:1; content:"/axis2-admin/login"; content:"loginUsername=admin"; content:"loginPassword=axis2"; http_client_body; sid:22010002; content:"/printenv.shtml"; content:"%3Cscript"; nocase; http_uri; sid:22019001; content:"/login.action"; content:"password="; nocase; http_client_body; content:"java.lang.ProcessBuilder"; content:"java.lang.String"; http_client_body; sid:22007003; content:"/user.action"; content:"name="; http_client_body; sid:22013001; content:"/index.action"; content:"redirect|3A|http"; http_uri; sid:22013002; content:"/index.action"; content:"redirect|3A|"; content:"java.lang."; http_uri; sid:22013003; content:"/index.action"; content:"action|3A|"; content:"java.lang."; http_uri; sid:22013004; content:"/index.action"; content:"redirectAction|3A|"; content:"java.lang."; http_uri; sid:22013005; content:"/login.action"; content:"redirect|3A|"; content:"java.lang."; http_uri; sid:22013006; content:"/login.action"; content:"action|3A|"; content:"java.lang."; http_uri; sid:22013007; content:"/login.action"; content:"redirectAction|3A|"; content:"java.lang."; http_uri; sid:22013008; content:"/context.js"; content:"Runtime"; content:"getRuntime"; content:"exec"; distance:0; http_client_body; sid:202013942; content:"/nifi-api/processors/"; startswith; content:"\"Command\""; http_client_body; sid:20202283;)
+alert http any any -> any any (msg:"Attempt to access system directories"; classtype:attempted-recon; rev:1; content:"bin|sbin|etc|dev|proc|var|tmp|usr|home|boot|lib|opt|mnt|media|srv|root"; nocase; pcre:"/(\/|%2F)(bin|sbin|etc|dev|proc|var|tmp|usr|home|boot|lib|opt|mnt|media|srv|root)/i"; sid:50200001;)
+alert http any any -> any any (msg:"Exploit CVE-2020-27130/27131 on Cisco Security Manager"; flow:to_server,established; content:"GET|POST"; http_method; pcre:"/^(\/athena\/(xdmProxy\/(xdmConfig|xdmResources)|itf\/resultsFrame\.jsp)|\/cwhp\/(Xmp|Sample)FileDownloadServlet|\/cwhp\/XmpFileUploadServlet|\/CSCOnm\/servlet\/(SecretService|com\.cisco\.nm\.cmf\.servlet\.(CsJaasService|com\.cisco\.nm\.cmf\.servlet\.(AuthToken|ClientServices|SecretService)Servlet))).*/U"; content:"../"; distance:0; http_uri; content:"filename=\".*\.\.\/.+\"\r\n"; pcre:"/|ac ed 00 05|java\/lang\/Runtime|java\/rmi\/server\/RemoteObject/"; http_client_body; reference:cve,CVE-2020-27130,CVE-2020-27131; classtype:web-application-attack; sid:2020271301; rev:1;)
+alert http any any -> any any (msg:"Possible SQL Injection attack"; flow:established,to_server; content:"union|select|'"; nocase; pcre:"/(\/|%2F)\?(.*[&]?)(union|select|')=/i"; classtype:attempted-database-attack; sid:50300001; rev:1;)
+alert http any any -> any any (msg:"Squirrelmail CVE-2006-2842 LFI, CVE-2002-1131 XSS"; content:"/src/(redirect|addressbook|options|search|help).php"; http_uri; content:"plugins[]=|<script"; nocase; http_uri; classtype:web-application-attack; sid:22006001; rev:1;)
+alert http any any -> any any (msg:"Detect sitemap"; content:"/sitemap\.(xml|xsl|xsd)"; http_uri; classtype:attempted-recon; sid:40000002; rev:1;)
+alert http any any -> any any (msg:"Local File Inclusion - Joomla CVEs"; content:"GET"; http_method; content:"/index\.php"; http_uri; pcre:"/(option=com_biblestudy&id=1&view=studieslist&controller=|option=com_ccnewsletter&controller=|component\/chronoforums2\/profiles\/avatar\/u1\?av=|option=com_rsfiles&task=files\.display&path=|option=com_imagebrowser&folder=|option=com_extplorer&action=show_error&dir=|components\/com_ionfiles\/download\.php\?file)/i"; content:"\.\./"; http_uri; classtype:web-application-attack; sid:22010001; rev:1;)
+alert http any any -> any any (msg:"CVE-2018-0127: Cisco RV132W/RV134W Router - Information Disclosure"; content:"GET"; http_method; content:"/dumpmdm.cmd"; http_uri; classtype:web-application-attack; sid:22018001; rev:1;)
+alert http any any -> any any (msg:"CVE-2018-0296: Cisco ASA - Local File Inclusion"; content:"GET"; http_method; content:"/+CSCOU+/../+CSCOE+/files/file_list.json"; http_uri; classtype:web-application-attack; sid:22018002; rev:1;)
+alert http any any -> any any (msg:"CVE-2018-1207: Dell iDRAC7/8 Devices - Remote Code Injection"; content:"GET"; http_method; content:"/cgi-bin/login?LD_DEBUG=files"; http_uri; classtype:web-application-attack; sid:22018003; rev:1;)
+alert http any any -> any any (msg:"CVE-2009-0545: ZeroShell <= 1.0beta11 Remote Code Execution"; content:"GET"; http_method; content:"/cgi-bin/kerbynet"; http_uri; content:"Section=NoAuthREQ&Action=x509List&type="; http_uri; classtype:web-application-attack; sid:22009001; rev:1;)
+alert http any any -> any any (msg:"CVE-2009-0932: Horde/Horde Groupware - Local File Inclusion"; content:"GET"; http_method; content:"/horde/util/barcode.php"; http_uri; content:"type="; http_uri; content:"../"; nocase; http_uri; classtype:web-application-attack; sid:22009002; rev:1;)
+alert http any any -> any any (msg:"CVE-2009-1151: PhpMyAdmin Scripts - Remote Code Execution"; content:"POST"; http_method; content:"/scripts/setup.php"; http_uri; content:"action="; nocase; http_client_body; content:"configuration="; nocase; http_client_body; content:"O|3A|10|3A 22|PMA_Config|22|"; nocase; http_client_body; classtype:web-application-attack; sid:22009003; rev:1;)
+alert http any any -> any any (msg:"CVE-2023-29489: cPanel - Cross-Site Scripting"; content:"GET"; http_method; content:"/cpanelwebcall/"; content:"%3Cimg"; nocase; http_uri; classtype:web-application-attack; sid:22023001; rev:1;)
+alert http any any -> any any (msg:"CVE-2023-28432: MinIO Cluster Deployment - Information Disclosure"; content:"POST"; http_method; content:"/minio/bootstrap/v1/verify"; http_uri; content:"application/x-www-form-urlencoded"; http_header; classtype:web-application-attack; sid:22023002; rev:1;)
+alert http any any -> any any (msg:"CVE-2023-24322: mojoPortal 2.7.0.0 - Cross-Site Scripting"; content:"GET"; http_method; content:"/Dialog/FileDialog.aspx"; http_uri; content:"javascript"; nocase; pcre:"/javascript(:|%3A)/smi"; classtype:web-application-attack; sid:22023003; rev:1;)
+alert http any any -> any any (msg:"CVE-2015-1503: IceWarp Mail Server <11.1.1 - Directory Traversal"; content:"GET"; http_method; content:"/webmail/old/calendar/minimizer/index.php"; http_uri; content:"type='...%2f"; nocase; http_uri; classtype:web-application-attack; sid:22015001; rev:1;)
+alert http any any -> any any (msg:"CVE-2005-2428: Lotus Domino R5 and R6 WebMail - Information Disclosure"; content:"/names.nsf/People?OpenView"; http_uri; classtype:web-application-attack; sid:22005001; rev:1;)
+alert http any any -> any any (msg:"CVE-2005-4385: Cofax <=2.0RC3 - Cross-Site Scripting"; content:"/search.htm"; http_uri; content:"searchstring="; nocase; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22005002; rev:1;)
+alert http any any -> any any (msg:"CVE-2019-12593: IceWarp Mail Server <=10.4.4 - Local File Inclusion"; content:"GET"; http_method; content:"/webmail/calendar/minimizer/index.php"; http_uri; content:"style="; http_uri; content:"..%5C"; nocase; http_uri; classtype:web-application-attack; sid:22019002; rev:1;)
+alert http any any -> any any (msg:"CVE-2019-12581: Zyxel ZyWal/USG/UAG Devices - Cross-Site Scripting"; content:"GET"; http_method; content:"/free_time_failed.cgi"; http_uri; content:"err_msg="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22019003; rev:1;)
+alert http any any -> any any (msg:"CVE-2011-0049: Majordomo2 - SMTP/HTTP Directory Traversal"; content:"GET"; http_method; content:"/cgi-bin/mj_wwwusr"; http_uri; content:"passw=&list=GLOBAL&user=&func=help&extra="; http_uri; content:"../"; http_uri; classtype:web-application-attack; sid:22011001; rev:1;)
+alert http any any -> any any (msg:"CVE-2011-3315: Cisco CUCM, UCCX, and Unified IP-IVR- Directory Traversal"; content:"GET"; http_method; content:"/ccmivr/IVRGetAudioFile.do"; http_uri; content:"file="; http_uri; content:"../"; http_uri; classtype:web-application-attack; sid:22011002; rev:1;)
+alert http any any -> any any (msg:"CVE-2011-2780: Chyrp 2.x - Local File Inclusion"; content:"GET"; http_method; content:"/includes/lib/gz.php"; http_uri; content:"file="; http_uri; content:"../"; http_uri; classtype:web-application-attack; sid:22011003; rev:1;)
+alert http any any -> any any (msg:"CVE-2012-4547: AWStats 6.95/7.0 - 'awredir.pl' Cross-Site Scripting"; content:"GET"; http_method; content:"/awstats/awredir.pl"; http_uri; content:"url="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22012001; rev:1;)
+alert http any any -> any any (msg:"CVE-2012-4273: 2 Click Socialmedia Buttons < 0.34 - Cross-Site Scripting"; content:"GET"; http_method; content:"/wp-content/plugins/2-click-socialmedia-buttons/libs/xing.php"; http_uri; content:"xing-url="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22012002; rev:1;)
+alert http any any -> any any (msg:"CVE-2012-4253: MySQLDumper 1.24.4 - Directory Traversal"; content:"GET"; http_method; content:"/learn/cubemail/filemanagement.php"; http_uri; content:"action=dl&f="; http_uri; content:"../"; http_uri; classtype:web-application-attack; sid:22012003; rev:1;)
+alert http any any -> any any (msg:"CVE-2014-1203: eYouMail - Remote Code Execution"; content:"POST"; http_method; content:"/webadm/?q=moni_detail.do&action=gragh"; http_uri; content:"type='|7C|"; http_client_body; classtype:web-application-attack; sid:22014001; rev:1;)
+alert http any any -> any any (msg:"CVE-2014-4544: Podcast Channels < 0.28 - Cross-Site Scripting"; content:"GET"; http_method; content:"/wp-content/plugins/podcast-channels/getid3/demos/demo.write.php"; http_uri; content:"Filename="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22014002; rev:1;)
+alert http any any -> any any (msg:"CVE-2014-10037: DomPHP 0.83 - Directory Traversal"; content:"GET"; http_method; content:"/photoalbum/index.php"; http_uri; content:"url="; http_uri; content:"../"; http_uri; classtype:web-application-attack; sid:22014003; rev:1;)
+alert http any any -> any any (msg:"CVE-2020-14179: Atlassian Jira Server/Data Center <8.5.8/8.6.0 - 8.11.1 - Information Disclosure"; content:"GET"; http_method; content:"/secure/QueryComponent!Default.jspa"; http_uri; classtype:web-application-attack; sid:22020001; rev:1;)
+alert http any any -> any any (msg:"CVE-2020-20982: shadoweb wdja v1.5.1 - Cross-Site Scripting"; content:"GET"; http_method; content:"/passport/index.php"; http_uri; content:"backurl="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22020002; rev:1;)
+alert http any any -> any any (msg:"CVE-2020-12127: WAVLINK WN530H4 M30H4.V5030.190403 - Information Disclosure"; content:"GET"; http_method; content:"/cgi-bin/ExportAllSettings.sh"; http_uri; classtype:web-application-attack; sid:22020003; rev:1;)
+alert http any any -> any any (msg:"CVE-2020-12720: vBulletin SQL Injection"; content:"POST"; http_method; content:"/ajax/api/content_infraction/getIndexableContent"; http_uri; content:"nodeId%5Bnodeid%5D"; http_uri; content:"%20select%20"; nocase; http_uri; classtype:web-application-attack; sid:22020004; rev:1;)
+alert http any any -> any any (msg:"CVE-2021-21479: SCIMono <0.0.19 - Remote Code Execution"; content:"GET"; http_method; content:"/Schemas/$%7B"; http_uri; content:"java.lang.Runtime.getRuntime().exec"; http_uri; classtype:web-application-attack; sid:22021001; rev:1;)
+alert http any any -> any any (msg:"CVE-2021-21799: Advantech R-SeeNet 2.4.12 - Cross-Site Scripting"; content:"GET"; http_method; content:"/php/telnet_form.php"; http_uri; content:"hostname="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22021002; rev:1;)
+alert http any any -> any any (msg:"CVE-2007-0885: Jira Rainbow.Zen - Cross-Site Scripting"; content:"/jira/secure/BrowseProject.jspa"; http_uri; content:"id="; nocase; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22007001; rev:1;)
+alert http any any -> any any (msg:"CVE-2007-5728: phpPgAdmin <=4.1.1 - Cross-Site Scripting"; content:"/redirect.php"; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22007004; rev:1;)
+alert http any any -> any any (msg:"CVE-2022-2487: Wavlink WN535K2/WN535K3 - OS Command Injection"; content:"POST"; http_method; content:"/cgi-bin/nightled.cgi"; http_uri; content:"page=night_led"; http_client_body; content:"start_hour=|3B|"; http_client_body; classtype:web-application-attack; sid:22022001; rev:1;)
+alert http any any -> any any (msg:"CVE-2004-0519: SquirrelMail 1.4.x - Folder Name Cross-Site Scripting"; content:"/mail/src/compose.php"; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22004001; rev:1;)
+alert http any any -> any any (msg:"CVE-2017-12637: SAP NetWeaver Application Server Java 7.5 - Local File Inclusion"; content:"GET"; http_method; content:"/scheduler/ui/js/ffffffffbca41eb4/UIUtilJavaScriptJS?/"; http_uri; classtype:web-application-attack; sid:22017001; rev:1;)
+alert http any any -> any any (msg:"CVE-2017-12794: Django Debug Page - Cross-Site Scripting"; content:"GET"; http_method; content:"/create_user/"; http_uri; content:"username="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22017002; rev:1;)
+alert http any any -> any any (msg:"CVE-2017-7391: Magmi 0.7.22 - Cross-Site Scripting"; content:"GET"; http_method; content:"/magmi/web/ajax_gettime.php"; http_uri; content:"prefix="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22017003; rev:1;)
+alert http any any -> any any (msg:"CVE-2008-2398: AppServ Open Project <=2.5.10 - Cross-Site Scripting"; content:"GET"; http_method; content:"index.php?appservlang="; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:22008003; rev:1;)
+alert http any any -> any any (msg:"CVE-2008-5587: phpPgAdmin <=4.2.1 - Local File Inclusion"; content:"GET"; http_method; content:"/phpPgAdmin/index.php"; http_uri; content:"_language"; http_uri; content:"../"; nocase; http_uri; classtype:web-application-attack; sid:22008006; rev:1;)
+alert http any any -> any any (msg:"CVE-2008-6465: Parallels H-Sphere 3.0.0 P9/3.1 P1 - Cross-Site Scripting"; content:"GET"; http_method; content:"/webshell4/login.php"; http_uri; content:"login="; http_uri; content:"|22| onfocus"; http_uri; classtype:web-application-attack; sid:22008008; rev:1;)
+alert http any any -> any any (msg:"CVE-2008-6982:  Devalcms 1.4a - Cross-Site Scripting"; content:"GET"; http_method; content:"/index.php"; http_uri; content:"currentpath="; http_uri; content:"%3sscript"; nocase; http_uri; classtype:web-application-attack; sid:22008009; rev:1;)
+alert http any any -> any any (msg:"CNVD-2018-13393: Metinfo - Local File Inclusion"; content:"GET"; http_method; content:"/include/thumb.php"; http_uri; content:"dir="; http_uri; content:"http"; http_uri; classtype:web-application-attack; sid:12018001; rev:1;)
+alert http any any -> any any (msg:"CNVD-2019-19299: Zhiyuan A8 - Remote Code Execution"; content:"POST"; http_method; content:"/seeyon/htmlofficeservlet"; http_uri; content:"DBSTEP V3."; nocase; http_client_body; classtype:web-application-attack; sid:12019001; rev:1;)
+alert http any any -> any any (msg:"CNVD-2019-32204: Fanwei e-cology <=9.0 - Remote Code Execution"; content:"POST"; http_method; content:"/bsh.servlet.BshServlet"; http_uri; content:"bsh.script="; nocase; http_client_body; content:"bsh.servlet.output="; nocase; http_client_body; classtype:web-application-attack; sid:12019002; rev:1;)
+alert http any any -> any any (msg:"CNVD-2020-23735: Xxunchi CMS - Local File Inclusion"; content:"GET"; http_method; content:"/backup/auto.php"; http_uri; content:"NzbwpQSdbY06Dngnoteo2wdgiekm7j4N"; http_uri; classtype:web-application-attack; sid:12020001; rev:1;)
+alert http any any -> any any (msg:"CNVD-2020-26585: Showdoc < 2.8.6 - File Uploads"; content:"POST"; http_method; content:"/index.php?s=/home/page/uploadImg"; http_uri; classtype:web-application-attack; sid:12020002; rev:1;)
+alert http any any -> any any (msg:"CNVD-2020-46552: Sangfor EDR - Remote Code Execution"; content:"GET"; http_method; content:"/tool/log/c.php"; http_uri; content:"strip_slashes="; http_uri; classtype:web-application-attack; sid:12020003; rev:1;)
+alert http any any -> any any (msg:"CNVD-2020-62422: Seeyon - Local File Inclusion"; content:"GET"; http_method; content:"/seeyon/webmail.do"; http_uri; content:"method=doDownloadAtt&filename="; http_uri; content:"filePath="; http_uri; classtype:web-application-attack; sid:12020004; rev:1;)
+alert http any any -> any any (msg:"CNVD-2020-68596: WeiPHP 5.0 - Path Traversal"; content:"POST"; http_method; content:"/public/index.php/material/Material/_download_imgage"; http_uri; content:"media_id=1&picUrl="; http_uri; content:"filePath="; http_uri; classtype:web-application-attack; sid:12020005; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-01931: Ruoyi Management System - Local File Inclusion"; content:"GET"; http_method; content:"/common/download/resource"; http_uri; content:"resource=/profile"; http_uri; classtype:web-application-attack; sid:12021001; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-09650: Ruijie Networks-EWEB Network Management System - Remote Code Execution"; content:"POST"; http_method; content:"/guest_auth/guestIsUp.php"; http_uri; content:"mac="; http_client_body; content:"ip="; http_client_body; classtype:web-application-attack; sid:12021002; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-10543: EEA - Information Disclosure"; content:"GET"; http_method; content:"/authenticationserverservlet"; http_uri; classtype:web-application-attack; sid:12021003; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-14536: Ruijie RG-UAC Unified Internet Behavior Management Audit System - Information Disclosure"; content:"GET"; http_method; content:"/get_dkey.php"; http_uri; content:"user=admin"; http_uri; classtype:web-application-attack; sid:12021004; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-15822: ShopXO Download File Read"; content:"GET"; http_method; content:"/public/index.php"; http_uri; content:"/index/qrcode/download/url/"; http_uri; classtype:web-application-attack; sid:12021005; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-15824: EmpireCMS - DOM Cross Site-Scripting"; content:"GET"; http_method; content:"/e/ViewImg/index.html"; http_uri; content:"url="; http_uri; content:"javascript:"; nocase; http_uri; classtype:web-application-attack; sid:12021006; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-26422: eYouMail - Remote Code Execution"; content:"POST"; http_method; content:"/webadm/?q=moni_detail.do&action=gragh"; http_uri; content:"type='|7C|"; http_client_body; classtype:web-application-attack; sid:12021007; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-28277: Landray-OA - Local File Inclusion"; content:"POST"; http_method; content:"/sys/ui/extend/varkind/custom.jsp"; http_uri; content:"var="; http_client_body; content:"file|3A|///"; http_client_body; classtype:web-application-attack; sid:12021008; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-30167: UFIDA NC BeanShell - Remote Command Execution"; content:"POST"; http_method; content:"/servlet/~ic/bsh.servlet.BshServlet"; http_uri; content:"bsh.script=exec"; http_client_body; classtype:web-application-attack; sid:12021009; rev:1;)
+alert http any any -> any any (msg:"CNVD-2021-49104: Pan Micro E-office - File Uploads"; content:"POST"; http_method; content:"/general/index/UploadFile.php"; http_uri; content:"uploadPicture&uploadType=eoffice_logo&userId="; http_uri; classtype:web-application-attack; sid:12021010; rev:1;)
+alert http any any -> any any (msg:"CNVD-2022-42853: ZenTao CMS - SQL Injection"; content:"/zentao/user-login.html"; http_uri; content:"account="; nocase; http_client_body; content:"updatexml"; nocase; http_client_body; classtype:web-application-attack; sid:12022001; rev:1;)
+alert http any any -> any any (msg:"ExacqVision Default Login"; content:"POST"; http_method; content:"/service.web"; http_uri; content:"action=login"; http_client_body; content:"u=admin"; http_client_body; content:"p=admin256"; http_client_body; classtype:default-login-attempt; sid:30000001; rev:1;)
+alert http any any -> any any (msg:"Oracle Siebel Loyalty 8.1 - Cross-Site Scripting"; content:"/loyalty_enu/start.swe"; http_uri; content:"%3Cscript"; nocase; http_uri; classtype:web-application-attack; sid:60000001; rev:1;)
+alert http any any -> any any (msg:"Detect SQLMap"; content:"sqlmap/"; nocase; http_user_agent; classtype:web-application-activity; sid:50000001; rev:1;)
+alert http any any -> any 7001 (msg:"Exploit CVE-2021-2109 on Oracle Weblogic Server"; flow:to_server,established; content:"/console/consolejndi.portal"; startswith; http_uri; content:"com.bea.console.handles.JndiBindingHandle"; content:"AdminServer"; distance:0; reference:cve,CVE-2021-2109; classtype:web-application-attack; sid:20212109; rev:1;)
+alert http any any -> any 7001 (msg:"Exploit CVE-2020-2109 (chains with CVE-2020-14750) Oracle Weblogic Server"; flow:to_server,established; content:"/console/"; startswith; http_uri; pcre:"/\/console\/(css|images)\//"; content:"2e"; nocase; distance:1; http_raw_uri; content:"consolejndi.portal"; distance:1; http_uri; reference:cve,CVE-2021-2109; classtype:web-application-attack; sid:20212109; rev:1;)
+alert http any any -> any any (msg:"Exploit CVE-2020-8209 on XenMobile"; flow:to_server,established; content:"/jsp/help-sb-download.jsp"; startswith; http_uri; reference:cve,CVE-2020-8209; classtype:web-application-attack; sid:20202255; rev:1;)
+alert http any any -> any 8000 (msg:"Exploit CVE-2020-16846 on SaltStack Salt"; flow:established,to_server; content:"POST"; http_method; content:"/run"; startswith; http_uri; content:"client=ssh"; http_client_body; content:"ssh_priv="; http_client_body; content:"%20"; distance:0; http_client_body; reference:cve,CVE-2020-16846; classtype:web-application-attack; sid:202016846; rev:1;)
+alert http any any -> any 7001 (msg:"Exploit CVE-2020-14750 on Oracle Weblogic Server"; flow:established,to_server; content:"/console/"; startswith; http_uri; pcre:"/^(css|images)\//UR"; content:"2e"; nocase; distance:1; http_raw_uri; content:"console.portal"; distance:1; http_uri; reference:cve,CVE-2020-14750; reference:cve,CVE-2020-14882; classtype:web-application-attack; sid:202014750; rev:1;)
+alert http any any -> any any (msg:"Exploit CVE-2020-12146 on Silver Peak Unity Orchestrator"; flow:established,to_server; content:"POST"; http_method; content:"/gms/rest/debugFiles/delete"; startswith; http_uri; pcre:"/(localhost|127\.0\.0\.1)/W"; content:"../phantomGenImg.js"; http_client_body; reference:cve,CVE-2020-12145; reference:cve,CVE-2020-12146; classtype:web-application-attack; sid:20202233; rev:1;)
+```
+
+Well done! 
+
+:+1: FLAG{l3ss_al3rts_m0r3_dr1nks}
+<hr>
+
+### Password panic
+Description
+We have been given a password vault on a USB taken from a crime scene and were asked to aid in data recovery. The suspect has expressed that he has forgotten the password, but he did say that wasn't long or complex. We don't believe he doesn't remember it, but we need the file decrypted anyway.
+
+Unfortunately, the new format of this database is making recovery more difficult.
+
+Flag format: FLAG{words_and_numbers}
+
+When extracted, there was a panic.kdbx file in there.
+
+This is a keepass encrypted file.
+
+Going to this github - https://github.com/r3nt0n/keepass4brute and using the bash script
+
+```
+#!/bin/bash
+
+# https://github.com/r3nt0n/keepass4brute
+# Name: keepass4brute.sh
+# Author: r3nt0n
+# Version: 1.0 (25/11/2022)
+
+version="1.1"
+/bin/echo -e "keepass4brute $version by r3nt0n"
+/bin/echo -e "https://github.com/r3nt0n/keepass4brute\n"
+
+
+if [ $# -ne 2 ]
+then
+  /bin/echo "Usage $0 <kdbx-file> <wordlist>"
+  exit 2
+fi
+
+dep="keepassxc-cli"
+command -v $dep >/dev/null 2>&1 || { /bin/echo >&2 "Error: $dep not installed.  Aborting."; exit 1; }
+
+n_total=$( wc -l < $2 )
+n_tested=0
+
+IFS=''
+while read -r line; do
+  n_tested=$((n_tested + 1))
+  /bin/echo -ne "[+] Words tested: $n_tested/$n_total ($line)                                          \r"
+
+  /bin/echo $line | keepassxc-cli open $1 &> /dev/null
+  if [ $? -eq 0 ]
+  then
+    /bin/echo -ne "\n"
+    /bin/echo "[*] Password found: $line"; exit 0;
+  fi
+done < $2
+
+/bin/echo -ne "\n"
+/bin/echo "[!] Wordlist exhausted, any match found"; exit 3;
+```
+
+and using the rockyou.txt password list as such
+```
+./solve.sh panic.kdbx /usr/share/wordlists/rockyou.txt
+```
+
+It cracked the password after a few minutes
+```
+keepass4brute 1.1 by r3nt0n
+https://github.com/r3nt0n/keepass4brute
+
+[+] Words tested: 126/14344392 (princess1)
+[*] Password found: princess1
+```
+
+From the command line you can then run keepassxc panic.kdbx and enter the password when the app opens (must install keepassxc first)
+
+You can dump the database to an XML file then open that and find the password.
+
+:+1: FLAG{thankx_f0r_the_crack}
+<hr>
+
+### POCDefender
+Description - Building a backend for our informational website was perhaps a terrible idea..
+
+We've received an anonymous vulnerability report with a nuclei template PoC. We don't really know much about network defences, but I've heard that iptables is pretty much installed on every linux system as a firewall.
+
+Can you write us some iptable rules to block the exploitation of this vulnerability? Just drop any packets that seem suspicious.
+
+The check server is on port 80, this is where you can put your rules for testing.. a dev instance of our website has also been provided on port 8080, so you can check out if your rules work.
+
+Be sure not to impact normal functionality of the website! We don't want legitimate users to be blocked, of course.
+
+The old town bank will be in your debt, and upon completion of the rules we will reward you graciously with FLAG{our-complementary-flag}
+
+Solution:
+Here is the ruleset to use
+```
+-A INPUT -p tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp --dport 8080 -m string --string ?lang=///etc///passwd --algo bm -j DROP
+-A INPUT -p tcp --dport 8080 -m string --string ?lang=///etc///os-release --algo bm -j DROP
+-A INPUT -p tcp --dport 8080 -m string --string ?lang=%2Fetc%2Fos-release --algo bm -j DROP
+-A INPUT -p tcp --dport 8080 -m string --string ?lang=//app/en.php --algo bm -j DROP
+-A INPUT -p tcp --dport 8080 -m string --string ?lang=../../../../..///app/en.php --algo bm -j DROP
+-A INPUT -p tcp --dport 8080 -m string --string ?lang=..%2F/../../../../..///app/en.php --algo bm -j DROP
+-A INPUT -p tcp --dport 8080 -m string --string ?a=b&b=c&lang=///etc///passwd?a=abc&lang=http://checkserver/exploit --algo bm -j DROP
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+```
+All payloads blocked with no impact on site functionality! 
+
+Here's your flag: 
+
+:+1: FLAG{iptables-1s-sup3r-versatile}
+<hr>
+
+### Prison Break
+Description -
+
+Solution:
+Connect to the kiosk using vncviewer 192.168.88.100:5901 and password 'prisoner'
+
+Create a new launcher shortcut on the panel that'll start nc - see image
+
+Start a listener on Kali VDI
+nc -nlvp 4444
+
+Click the launcher in the Kiosk and establish a reverse shell.
+For a fully interactive shell, enter:
+python -c 'import pty;pty.spawn("/bin/bash")';
+
+Checking for odd binaries reveals
+```
+/usr/sbin/elevate
+```
+which is owned by admin
+
+Looking at the binary, there's an interesting function that indicates the security code is calculated based on the time the binary is run. To predict what it will be,
+that function can be run as the following which is set for 10 seconds in the future:
+```
+printf "$(python3 -c 'import time; JAIL_CONSTANT = 0x4A41494C; MODULO = 1000000; local_c = 9; tVar1 = int(time.time()) + 10; print(((local_c + tVar1) * JAIL_CONSTANT) % MODULO)')"
+```
+then run
+```
+/usr/sbin/elevate /bin/bash
+```
+to set the UID to 1000 (admin)
+
+/etc/sshd/sshd_config is wriatable by admin
+
+Modify the sshd_config file
+In the config file there is a location to write to
+
+GOTTA FINISH THIS ONE
 
 
 ### Rbac User api
@@ -1701,187 +2579,6 @@ for _ in range(100):
             count += 1
 ```
 :+1: FLAG{unl34sh-the-b0ts}
-<hr>
-
-LARGE FLAG MODEL CODE
-Description - I recently started building my own LLM... I am not sure what I'm doing yet, but I managed to get some sort of next-token prediction algorithm working with
-only one word using some data from Wikipedia pages. I've heard all about security concerns on leaking training data, so for testing, I've hidden a flag in the training data to see if you can find it. Flag
-Format: FLAG{your_example_flag_goes_here}
-
-Code provided
-```
-#!/usr/bin/env python3
-
-import sys
-import random
-import pickle
-import time
-
-def predict(word_sequence, model, sequence_length=8):
-    '''
-    sequence length defines the maximum limit of words to spit out
-    '''
-    try:
-        if len(word_sequence) >= sequence_length:
-            return word_sequence
-
-        start_word = word_sequence[-1]
-        
-        # Check if start_word exists in the model
-        if start_word not in model:
-            return None
-
-        candidates = model[start_word]
-        # print(candidates)
-        candidates_sorted = sorted(candidates, key=lambda x: x[1], reverse=True)
-
-        most_probable = candidates_sorted[random.randrange(0, min(3, len(candidates_sorted)))] # pick between top 3 candidates
-        word_sequence.extend(most_probable[0])
-
-        return predict(word_sequence, model, sequence_length)
-    except RecursionError:
-        print("Recursion limit exceeded. Skipping word.")
-        return word_sequence
-
-def main():
-    try:
-        model_file = open('model.pkl', 'rb')
-        model = pickle.load(model_file)
-        model_file.close()
-    except FileNotFoundError:
-        print("Error: Model file not found.")
-        return
-
-    try:
-        words_file = open('words.txt', 'r')
-        words = words_file.read().split()
-        words_file.close()
-    except FileNotFoundError:
-        print("Error: Words file not found.")
-        return
-
-    # Set maximum recursion depth
-    sys.setrecursionlimit(3000)  # Adjust this limit as needed
-
-    for word in words:
-        print("Prompt:", word)
-        prediction = predict([word], model)
-        if prediction is not None:
-            print(' '.join(prediction))
-            print()
-        time.sleep(0.1)  # Sleep for one second between each word
-
-if __name__ == "__main__":
-    main()
-```
-Solution.
-Extracted all proper words from model.pkl file to a file called words.txt
-```
-import re
-
-# Open the input file
-with open('temp.txt', 'r') as file:
-    # Read the single line of data
-    line = file.readline()
-
-    # Use regular expression to find words enclosed in single quotes
-    words = re.findall(r"'(.*?)'", line)
-
-# Define a function to strip non-alphabetic characters from a word
-def strip_non_alpha(word):
-    return re.sub(r'[^a-zA-Z]', '', word)
-
-# Strip non-alphabetic characters and leading/trailing whitespace from each word
-stripped_words = [strip_non_alpha(word.strip()) for word in words]
-
-# Open the output file to write the extracted words
-with open('words.txt', 'w') as output_file:
-    # Write each word (after stripping non-alphabetic characters and whitespace) to the output file
-    for word in stripped_words:
-        output_file.write(word + '\n')
-
-print("Words extracted, stripped of non-alphabetic characters and leading/trailing whitespace, and written to words.txt")
-
-```
-Modified the original source code to then read each line of word.txt and enter that at the prompt
-```
-#!/usr/bin/env python3
-
-import sys
-import random
-import pickle
-
-
-def predict(word_sequence, model, sequence_length=8, max_depth=20):
-    '''
-    sequence length defines the maximum limit of words to spit out
-    '''
-    if len(word_sequence) >= sequence_length or max_depth <= 0:
-        return word_sequence
-
-    start_word = word_sequence[-1]
-    candidates = model.get(start_word, [])  # If start_word is not in the model, return an empty list
-    if not candidates:  # If there are no candidates for the start word, return the sequence as is
-        return word_sequence
-
-    candidates_sorted = sorted(candidates, key=lambda x: x[1], reverse=True)
-
-    most_probable = candidates_sorted[random.randrange(0, min(10, len(candidates)))]  # Pick between top 3 candidate>
-    word_sequence.extend(most_probable[0])
-
-    return predict(word_sequence, model, sequence_length, max_depth - 1)
-
-
-model_file = open('model.pkl', 'rb')
-model = pickle.load(model_file)
-model_file.close()
-
-# Read words from words.txt
-with open('words.txt', 'r') as words_file:
-    for word in words_file:
-        prompt = word.strip()
-        if prompt:  # Ensure the prompt is not empty
-            print("prompt:", prompt)  # Print the word as the prompt
-            print(' '.join(predict([prompt], model)))
-```
-
-Executed that and wrote to results.txt
-```
-python3 solve.py > results.txt
-```
-
-Used grep to try and find 'FLAG' but that would have been too easy.
-Grepping for flag idientified some interesting output
-```
-very hidden flag starts with all uppercase characters
-consumer electronics.[citation needed] the very hidden flag starts with all uppercase
-consumer electronics.[citation needed] the very hidden flag starts with
-outside the range of most consumer electronics.[citation needed] the very hidden flag starts
-hidden flag starts with all uppercase characters (including blanks
-flag starts with all uppercase characters flag, then curly
-flag starts with all uppercase characters is the
-hidden flag starts with all you need". this
-flag starts with all you need". model training took "14
-flag starts with all uppercase characters flag, then curly
-security concern. these are hidden flag starts with all uppercase characters flag, then
-hidden flag starts with a context window larger
-hidden flag starts with all uppercase characters flag, then curly brackets,
-security concern. these are hidden flag starts with all uppercase
-hidden flag starts with a model is the
-hidden flag starts with all you need". model
-jack police flag starts with all uppercase characters
-jack police flags civil flag starts with a
-jack police flag starts with all uppercase characters
-
-```
-Slowly working through different greps and it resulted in this
-```
-very hidden flag starts with all uppercase characters flag starts with all uppercase characters flag, 
-then curly brackets, then the lowercase words parrots are loud but wisdom is silent joined by 
-underscore and ends with a closing bracket.
-```
-
-:+1: FLAG{parrots_are_loud_but_wisdom_is_silent}
 <hr>
 
 ### secretsbin
