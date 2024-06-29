@@ -1704,6 +1704,11 @@ for _ in range(100):
 <hr>
 
 LARGE FLAG MODEL CODE
+Description - I recently started building my own LLM... I am not sure what I'm doing yet, but I managed to get some sort of next-token prediction algorithm working with
+only one word using some data from Wikipedia pages. I've heard all about security concerns on leaking training data, so for testing, I've hidden a flag in the training data to see if you can find it. Flag
+Format: FLAG{your_example_flag_goes_here}
+
+Code provided
 ```
 #!/usr/bin/env python3
 
@@ -1768,8 +1773,116 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+Solution.
+Extracted all proper words from model.pkl file to a file called words.txt
+```
+import re
+
+# Open the input file
+with open('temp.txt', 'r') as file:
+    # Read the single line of data
+    line = file.readline()
+
+    # Use regular expression to find words enclosed in single quotes
+    words = re.findall(r"'(.*?)'", line)
+
+# Define a function to strip non-alphabetic characters from a word
+def strip_non_alpha(word):
+    return re.sub(r'[^a-zA-Z]', '', word)
+
+# Strip non-alphabetic characters and leading/trailing whitespace from each word
+stripped_words = [strip_non_alpha(word.strip()) for word in words]
+
+# Open the output file to write the extracted words
+with open('words.txt', 'w') as output_file:
+    # Write each word (after stripping non-alphabetic characters and whitespace) to the output file
+    for word in stripped_words:
+        output_file.write(word + '\n')
+
+print("Words extracted, stripped of non-alphabetic characters and leading/trailing whitespace, and written to words.txt")
 
 ```
+Modified the original source code to then read each line of word.txt and enter that at the prompt
+```
+#!/usr/bin/env python3
+
+import sys
+import random
+import pickle
+
+
+def predict(word_sequence, model, sequence_length=8, max_depth=20):
+    '''
+    sequence length defines the maximum limit of words to spit out
+    '''
+    if len(word_sequence) >= sequence_length or max_depth <= 0:
+        return word_sequence
+
+    start_word = word_sequence[-1]
+    candidates = model.get(start_word, [])  # If start_word is not in the model, return an empty list
+    if not candidates:  # If there are no candidates for the start word, return the sequence as is
+        return word_sequence
+
+    candidates_sorted = sorted(candidates, key=lambda x: x[1], reverse=True)
+
+    most_probable = candidates_sorted[random.randrange(0, min(10, len(candidates)))]  # Pick between top 3 candidate>
+    word_sequence.extend(most_probable[0])
+
+    return predict(word_sequence, model, sequence_length, max_depth - 1)
+
+
+model_file = open('model.pkl', 'rb')
+model = pickle.load(model_file)
+model_file.close()
+
+# Read words from words.txt
+with open('words.txt', 'r') as words_file:
+    for word in words_file:
+        prompt = word.strip()
+        if prompt:  # Ensure the prompt is not empty
+            print("prompt:", prompt)  # Print the word as the prompt
+            print(' '.join(predict([prompt], model)))
+```
+
+Executed that and wrote to results.txt
+```
+python3 solve.py > results.txt
+```
+
+Used grep to try and find 'FLAG' but that would have been too easy.
+Grepping for flag idientified some interesting output
+```
+very hidden flag starts with all uppercase characters
+consumer electronics.[citation needed] the very hidden flag starts with all uppercase
+consumer electronics.[citation needed] the very hidden flag starts with
+outside the range of most consumer electronics.[citation needed] the very hidden flag starts
+hidden flag starts with all uppercase characters (including blanks
+flag starts with all uppercase characters flag, then curly
+flag starts with all uppercase characters is the
+hidden flag starts with all you need". this
+flag starts with all you need". model training took "14
+flag starts with all uppercase characters flag, then curly
+security concern. these are hidden flag starts with all uppercase characters flag, then
+hidden flag starts with a context window larger
+hidden flag starts with all uppercase characters flag, then curly brackets,
+security concern. these are hidden flag starts with all uppercase
+hidden flag starts with a model is the
+hidden flag starts with all you need". model
+jack police flag starts with all uppercase characters
+jack police flags civil flag starts with a
+jack police flag starts with all uppercase characters
+
+```
+Slowly working through different greps and it resulted in this
+```
+very hidden flag starts with all uppercase characters flag starts with all uppercase characters flag, 
+then curly brackets, then the lowercase words parrots are loud but wisdom is silent joined by 
+underscore and ends with a closing bracket.
+```
+
+:+1: FLAG{parrots_are_loud_but_wisdom_is_silent}
+<hr>
 
 ### secretsbin
 Description - I built my own temporary, encrypted notes service! I am pretty confident about my bash skills, but just in case, can you see if there are any bugs in it? 
@@ -1996,6 +2109,39 @@ The STMP logs revealed the flag after a few emails were received.
 192.168.88.2 - - [13/Apr/2024 17:11:29] "GET /blockrules/blockrules HTTP/1.1" 200 -
 ```
 :+1: FLAG{f4st_thr34t_sh4r1ng}
+<hr>
+
+### Walls on fire
+Description
+I've recently detected some suspicious activity on my network after installing my firewall. That's strange, I thought the firewall was supposed to protect me from threats.
+
+Can you have a look at the disk image of the firewall and tell me what happened:
+what time did the attacker successfully get the password? (format like Jan 12 01:02:03)
+what was the IP address of the attacker that successfully bruteforced the password?
+what was the password that the attacker obtained?
+what was the IP address the attacker used to login to the admin portal?
+what ports did the attacker open to the internal network (separated by comma)?
+what was the full path of the backdoor placed by the attacker?
+
+flag format:
+FLAG{Jan 12 01:02:03-192.168.x.x-password-192.168.x.x-1234,5678-/path/to/backdoor/script}
+Solution:
+what time did the attacker successfully get the password? Feb 20 05:58:03
+
+what was the IP address of the attacker that successfully bruteforced the password? 192.168.29.145
+
+what was the password that the attacker obtained?
+config.xml changed Feb 20 04:47 - $2b$10$13u6qwCOwODv34GyCMgdWub6oQF3RX0rG7c3d3X4JvzuEmAXLYDd2 - admin123
+config.xml changed Feb 20 04:47 - $2y$10$YsYPNC0dUmtvO6GkBjetyOAb0T4WwohO4Q.Bichty98Ig.7MnFmEm
+changed to 'password' -           $2y$10$wZn12dOqUwlFeakFt0ov0OWucg0SNYKKnGH.nCI/o0SPmHulnjHcq
+
+what was the IP address the attacker used to login to the admin portal? 192.168.29.132
+
+what ports did the attacker open to the internal network (separated by comma)? 3389,8081
+
+what was the full path of the backdoor placed by the attacker? /etc/pf.config
+
+:+1: FLAG{Feb 20 05:58:03-192.168.29.145-admin123-192.168.29.132-3389,8081-/etc/pf.config}
 <hr>
 
 ### Your other DBA
