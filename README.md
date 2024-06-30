@@ -2,19 +2,6 @@
 # CTF Writeups
 ## Writeups for the ADF Cyber Skills Association Season 2 challenges.
 
-### Title of challenge here
-Description - xxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-place any code here
-```
-Solution:
-Plugged this straight into ChatGPT:
-```
-More code here for solution
-```
-:+1: FLAG{ENTER_FLAG_HERE}
-<hr>
-
 ### APT Trivia
 Description - Are you an APT connoisseur? Flag format:
 FLAG{example-flag-here} Port: 1337
